@@ -48,6 +48,9 @@
 void print_key_values( FILE *fp, const std::vector<ddb_item> &items );
 void print_keys( FILE *fp, const std::vector<ddb_item> &items );
 
+void test_sqs( void );
+void test_ddb( void );
+
 void print_key_values( FILE *fp, const std::vector<ddb_item> &items ) {
 	if( items.size( ) > 0 ) {
 		fprintf( fp, "[\n" );

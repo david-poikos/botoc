@@ -145,8 +145,11 @@ public:
 		}
 		_type = type;
 	}
+	inline void set_value_raw( const void *value, std::size_t length ) throw( ) {
+		set_value_raw( value, length, _type );
+	}
 	
-	inline void set_value( const std::string &value ) throw( ) {
+	inline void set_value( const std::string &value, DDBType type ) throw( ) {
 		const std::size_t l = value.size( );
 		if( l > _length ) {
 			if( _value != NULL ) {
@@ -161,9 +164,13 @@ public:
 			_length = 0;
 			fprintf( stderr, "ddb_item set_value (std::string): no memory\n" );
 		}
+		_type = type;
+	}
+	inline void set_value( const std::string &value ) throw( ) {
+		set_value( value, _type );
 	}
 	
-	inline void set_value( const char *value ) throw( ) {
+	inline void set_value( const char *value, DDBType type ) throw( ) {
 		const std::size_t l = strlen( value );
 		if( l > _length ) {
 			if( _value != NULL ) {
@@ -178,6 +185,10 @@ public:
 			_length = 0;
 			fprintf( stderr, "ddb_item set_value (std::string): no memory\n" );
 		}
+		_type = type;
+	}
+	inline void set_value( const char *value ) throw( ) {
+		set_value( value, _type );
 	}
 	
 	inline void set_value( const void *value, std::size_t length, DDBType type ) throw( ) {
@@ -300,6 +311,74 @@ public:
 		}
 	}
 	
+	inline void set_value_additive( float value ) throw( ) {
+		const std::size_t l = (std::size_t) snprintf( NULL, 0, "%f", value );
+		if( l >= _length ) {
+			if( _value != NULL ) {
+				free( _value );
+			}
+			_value = (char *) malloc( (l + 1) * sizeof( char ) );
+		}
+		_length = l;
+		if( _value != NULL ) {
+			(void) snprintf( _value, _length + 1, "+%f", value );
+		} else if( _length > 0 ) {
+			_length = 0;
+			fprintf( stderr, "ddb_item set_value (float): no memory\n" );
+		}
+	}
+	
+	inline void set_value_additive( double value ) throw( ) {
+		const std::size_t l = (std::size_t) snprintf( NULL, 0, "%f", value );
+		if( l >= _length ) {
+			if( _value != NULL ) {
+				free( _value );
+			}
+			_value = (char *) malloc( (l + 1) * sizeof( char ) );
+		}
+		_length = l;
+		if( _value != NULL ) {
+			(void) snprintf( _value, _length + 1, "+%f", value );
+		} else if( _length > 0 ) {
+			_length = 0;
+			fprintf( stderr, "ddb_item set_value (double): no memory\n" );
+		}
+	}
+	
+	inline void set_value_additive( int value ) throw( ) {
+		const std::size_t l = (std::size_t) snprintf( NULL, 0, "%d", value );
+		if( l >= _length ) {
+			if( _value != NULL ) {
+				free( _value );
+			}
+			_value = (char *) malloc( (l + 1) * sizeof( char ) );
+		}
+		_length = l;
+		if( _value != NULL ) {
+			(void) snprintf( _value, _length + 1, "+%d", value );
+		} else if( _length > 0 ) {
+			_length = 0;
+			fprintf( stderr, "ddb_item set_value (int): no memory\n" );
+		}
+	}
+	
+	inline void set_value_additive( long value ) throw( ) {
+		const std::size_t l = (std::size_t) snprintf( NULL, 0, "%ld", value );
+		if( l >= _length ) {
+			if( _value != NULL ) {
+				free( _value );
+			}
+			_value = (char *) malloc( (l + 1) * sizeof( char ) );
+		}
+		_length = l;
+		if( _value != NULL ) {
+			(void) snprintf( _value, _length + 1, "+%ld", value );
+		} else if( _length > 0 ) {
+			_length = 0;
+			fprintf( stderr, "ddb_item set_value (long): no memory\n" );
+		}
+	}
+	
 	inline ddb_item( void ) throw( ) :
 	_name( ),
 	_length( 0 ),
@@ -316,11 +395,11 @@ public:
 	{
 	}
 	
-	inline ddb_item( const std::string &name, const std::string &value ) throw( ) :
+	inline ddb_item( const std::string &name, const std::string &value, DDBType type = DDB_STRING ) throw( ) :
 	_name( name ),
 	_length( value.size( ) ), // does NOT include \0
 	_value( (char *) malloc( _length * sizeof( char ) ) ),
-	_type( DDB_STRING )
+	_type( type )
 	{
 		if( _value != NULL ) {
 			memcpy( _value, value.c_str( ), _length );
@@ -330,11 +409,11 @@ public:
 		}
 	}
 	
-	inline ddb_item( const std::string &name, const char *value ) throw( ) :
+	inline ddb_item( const std::string &name, const char *value, DDBType type = DDB_STRING ) throw( ) :
 	_name( name ),
 	_length( strlen( value ) ), // does NOT include \0
 	_value( (char *) malloc( _length * sizeof( char ) ) ),
-	_type( DDB_STRING )
+	_type( type )
 	{
 		if( _value != NULL ) {
 			memcpy( _value, value, _length );
@@ -430,7 +509,7 @@ public:
 	
 	inline ddb_item( const std::string &name, float value ) throw( ) :
 	_name( name ),
-	_length( snprintf( NULL, 0, "%f", value ) ),
+	_length( (std::size_t) snprintf( NULL, 0, "%f", value ) ),
 	_value( (char *) malloc( (_length + 1) * sizeof( char ) ) ),
 	_type( DDB_NUMBER )
 	{
@@ -443,7 +522,7 @@ public:
 	}
 	inline ddb_item( const std::string &name, double value ) throw( ) :
 	_name( name ),
-	_length( snprintf( NULL, 0, "%f", value ) ),
+	_length( (std::size_t) snprintf( NULL, 0, "%f", value ) ),
 	_value( (char *) malloc( (_length + 1) * sizeof( char ) ) ),
 	_type( DDB_NUMBER )
 	{
@@ -456,7 +535,7 @@ public:
 	}
 	inline ddb_item( const std::string &name, int value ) throw( ) :
 	_name( name ),
-	_length( snprintf( NULL, 0, "%d", value ) ),
+	_length( (std::size_t) snprintf( NULL, 0, "%d", value ) ),
 	_value( (char *) malloc( (_length + 1) * sizeof( char ) ) ),
 	_type( DDB_NUMBER )
 	{
@@ -469,7 +548,7 @@ public:
 	}
 	inline ddb_item( const std::string &name, long value ) throw( ) :
 	_name( name ),
-	_length( snprintf( NULL, 0, "%ld", value ) ),
+	_length( (std::size_t) snprintf( NULL, 0, "%ld", value ) ),
 	_value( (char *) malloc( (_length + 1) * sizeof( char ) ) ),
 	_type( DDB_NUMBER )
 	{
@@ -505,6 +584,7 @@ public:
 // internal
 static PyObject *ddb_prep( void ) throw( );
 static PyObject *PyDict_from_ddbitems( const std::vector<ddb_item> &items );
+static PyObject *PyDict_from_ddbitems_update( const std::vector<ddb_item> &items );
 static PyObject *PyList_from_ddbitems( const std::vector<ddb_item> &items );
 static void update_ddbitems_from_PyDict( std::vector<ddb_item> &items, PyObject *ret_items );
 
@@ -748,11 +828,68 @@ PyObject *PyDict_from_ddbitems( const std::vector<ddb_item> &items ) {
 		PyObject *t = PyDict_New( );
 		PyObject *o = PyDict_New( );
 		char m[2] = { DDBTypeS[items[i].type()], '\0' };
-		PyObject *s = PyString_FromStringAndSize( items[i].value( ), items[i].value_length( ) );
+		PyObject *s = PyString_FromStringAndSize( items[i].value( ), (Py_ssize_t) items[i].value_length( ) );
 		PyDict_SetItemString( o, m, s );
 		Py_DECREF( s );
 		PyDict_SetItemString( t, "Value", o );
 		Py_DECREF( o );
+		PyObject *key = PyString_FromString( items[i].name( ).c_str( ) );
+		PyDict_SetItem( r, key, t );
+		Py_DECREF( key );
+		Py_DECREF( t );
+	}
+	if( PyErr_Occurred( ) != NULL ) {
+		PyObject *ex_type;
+		PyObject *ex_value;
+		PyObject *ex_traceback;
+		PyErr_Fetch( &ex_type, &ex_value, &ex_traceback );
+		PyObject *ex_type_name = PyObject_Str( ex_type );
+		PyObject *ex_value_str = PyObject_Str( ex_value );
+		fprintf( stderr, "PyDict_from_ddbitems hit exception: %s (%s)\n", PyString_AsString( ex_type_name ), PyString_AsString( ex_value_str ) );
+		Py_DECREF( ex_type_name );
+		Py_DECREF( ex_value_str );
+		Py_DECREF( ex_type );
+		if( ex_value != NULL ) { Py_DECREF( ex_value ); }
+		if( ex_traceback != NULL ) { Py_DECREF( ex_traceback ); }
+		Py_DECREF( r );
+		return NULL;
+	}
+	return r;
+}
+PyObject *PyDict_from_ddbitems_update( const std::vector<ddb_item> &items ) {
+	if( !Py_IsInitialized( ) ) {
+		fprintf( stderr, "python has not been initialised\n" );
+		return NULL;
+	}
+	PyObject *r = PyDict_New( );
+	for( std::size_t i = 0, e = items.size( ); i < e; ++ i ) {
+		PyObject *t = PyDict_New( );
+		if( items[i].value_length( ) == 0 ) {
+			// setting to blank ("") should delete the item
+			PyObject *s = PyString_FromString( "DELETE" );
+			PyDict_SetItemString( t, "Action", s );
+			Py_DECREF( s );
+		} else if( items[i].type( ) == DDB_NUMBER && items[i].value( )[0] == '+' ) {
+			PyObject *sa = PyString_FromString( "ADD" );
+			PyDict_SetItemString( t, "Action", sa );
+			Py_DECREF( sa );
+			
+			PyObject *o = PyDict_New( );
+			char m[2] = { DDBTypeS[DDB_NUMBER], '\0' };
+			PyObject *s = PyString_FromStringAndSize( &items[i].value( )[1], (Py_ssize_t) (items[i].value_length( ) - 1) );
+			PyDict_SetItemString( o, m, s );
+			Py_DECREF( s );
+			PyDict_SetItemString( t, "Value", o );
+			Py_DECREF( o );
+		} else {
+			PyObject *o = PyDict_New( );
+			char m[2] = { DDBTypeS[items[i].type()], '\0' };
+			PyObject *s = PyString_FromStringAndSize( items[i].value( ), (Py_ssize_t) items[i].value_length( ) );
+			PyDict_SetItemString( o, m, s );
+			Py_DECREF( s );
+			PyDict_SetItemString( t, "Value", o );
+			Py_DECREF( o );
+		}
 		PyObject *key = PyString_FromString( items[i].name( ).c_str( ) );
 		PyDict_SetItem( r, key, t );
 		Py_DECREF( key );
@@ -782,7 +919,7 @@ PyObject *PyList_from_ddbitems( const std::vector<ddb_item> &items ) {
 		return NULL;
 	}
 	const std::size_t e = items.size( );
-	PyObject *r = PyList_New( e );
+	PyObject *r = PyList_New( (Py_ssize_t) e );
 	for( std::size_t i = 0; i < e; ++ i ) {
 		PyObject *key = PyString_FromString( items[i].name( ).c_str( ) );
 		PyList_SET_ITEM( r, i, key );
@@ -817,26 +954,26 @@ void update_ddbitems_from_PyDict( std::vector<ddb_item> &items, PyObject *ret_it
 			PyObject *value; // borrowed
 			Py_ssize_t pos = 0;
 			if( !PyDict_Next( itm, &pos, &type, &value ) ) {
-				fprintf( stderr, "malformed record (no data) for key %s\n", items[i].name( ).c_str( ) );
+				fprintf( stderr, "malformed record (no data) for key %s\n", items[(std::size_t)i].name( ).c_str( ) );
 				continue;
 			}
 			const char *t = PyString_AsString( type );
 			const char *v = PyString_AsString( value );
 			if( t == NULL ) {
-				fprintf( stderr, "malformed record (type is not a string) for key %s\n", items[i].name( ).c_str( ) );
+				fprintf( stderr, "malformed record (type is not a string) for key %s\n", items[(std::size_t)i].name( ).c_str( ) );
 				continue;
 			}
 			if( v == NULL ) {
-				fprintf( stderr, "malformed record (value is not a string) for key %s\n", items[i].name( ).c_str( ) );
+				fprintf( stderr, "malformed record (value is not a string) for key %s\n", items[(std::size_t)i].name( ).c_str( ) );
 				continue;
 			}
 			const char *const t2 = strchr( DDBTypeS, t[0] );
 			if( t2 == NULL ) {
-				fprintf( stderr, "malformed record (no type) for key %s\n", items[i].name( ).c_str( ) );
+				fprintf( stderr, "malformed record (no type) for key %s\n", items[(std::size_t)i].name( ).c_str( ) );
 				continue;
 			}
-			const ddb_item itm( PyString_AsString( key ), v, -1, (DDBType) ((std::size_t) (t2 - DDBTypeS) / sizeof( char )), true );
-			items.push_back( itm );
+			const ddb_item o( PyString_AsString( key ), v, (std::size_t) -1, (DDBType) ((std::size_t) (t2 - DDBTypeS) / sizeof( char )), true );
+			items.push_back( o );
 		}
 	} else {
 		for( std::size_t i = items.size( ); (i --) > 0; ) {
@@ -845,7 +982,7 @@ void update_ddbitems_from_PyDict( std::vector<ddb_item> &items, PyObject *ret_it
 			Py_DECREF( key );
 			
 			if( itm == NULL ) {
-				items.erase( items.begin( ) + i );
+				items.erase( items.begin( ) + (std::ptrdiff_t) i );
 				continue;
 			}
 			
@@ -872,7 +1009,7 @@ void update_ddbitems_from_PyDict( std::vector<ddb_item> &items, PyObject *ret_it
 				fprintf( stderr, "malformed record (no type) for key %s\n", items[i].name( ).c_str( ) );
 				continue;
 			}
-			items[i].set_value_raw( v, -1, (DDBType) ((std::size_t) (t2 - DDBTypeS) / sizeof( char )) );
+			items[i].set_value_raw( v, (std::size_t) -1, (DDBType) ((std::size_t) (t2 - DDBTypeS) / sizeof( char )) );
 		}
 	}
 }
@@ -903,7 +1040,7 @@ static bool ddb_update( const std::string &db, const std::string &key, const std
 	PyDict_SetItemString( key_dict, "HashKeyElement", key_prop );
 	Py_DECREF( key_prop );
 	PyTuple_SET_ITEM( arg_list, 1, key_dict );
-	PyTuple_SET_ITEM( arg_list, 2, PyDict_from_ddbitems( items ) );
+	PyTuple_SET_ITEM( arg_list, 2, PyDict_from_ddbitems_update( items ) );
 	
 	PyObject *arg_dict = PyDict_New( );
 	if( expected != NULL ) {
@@ -917,7 +1054,7 @@ static bool ddb_update( const std::string &db, const std::string &key, const std
 	PyObject *ret;
 	for( int attempt = 0; attempt < 3; ++ attempt ) {
 		if( attempt > 0 ) {
-			sleep( (int) (1.0f * powf( 2.0f, (float) attempt - 1.0f )) );
+			(void) sleep( (unsigned int) (1.0f * powf( 2.0f, (float) attempt - 1.0f )) );
 			// provisioning is per second, so try waiting until the next second
 			// waits 1 second, 2 seconds, 4 seconds, ...
 			fprintf( stderr, "ddb_update attempt %d", attempt + 1 );
@@ -1030,14 +1167,12 @@ static bool ddb_get( const std::string &db, const std::string &key, bool consist
 	PyObject *gets = PyList_from_ddbitems( items );
 	PyDict_SetItemString( arg_dict, "attributes_to_get", gets );
 	Py_DECREF( gets );
-	//	PyObject *yes = PyBool_FromLong( 1 );
 	PyDict_SetItemString( arg_dict, "consistent_read", consistent ? Py_True : Py_False );
-	//	Py_DECREF( yes );
 	
 	PyObject *ret;
 	for( int attempt = 0; attempt < 3; ++ attempt ) {
 		if( attempt > 0 ) {
-			sleep( (int) (1.0f * powf( 2.0f, (float) attempt - 1.0f )) );
+			(void) sleep( (unsigned int) (1.0f * powf( 2.0f, (float) attempt - 1.0f )) );
 			// provisioning is per second, so try waiting until the next second
 			// waits 1 second, 2 seconds, 4 seconds, ...
 			fprintf( stderr, "ddb_get attempt %d", attempt + 1 );
@@ -1056,6 +1191,7 @@ static bool ddb_get( const std::string &db, const std::string &key, bool consist
 			Py_DECREF( ex_type );
 			if( ret != NULL ) {
 				Py_DECREF( ret );
+				ret = NULL;
 			}
 			const char *m = PyString_AsString( ex_type_name );
 			if( strcmp( m, "<class 'boto.dynamodb.exceptions.ProvisionedThroughputExceededException'>" ) == 0 ) {
@@ -1105,6 +1241,11 @@ static bool ddb_get( const std::string &db, const std::string &key, bool consist
 	Py_DECREF( arg_list );
 	Py_DECREF( arg_dict );
 	Py_DECREF( get_item_f );
+	
+	if( ret == NULL ) {
+		fprintf( stderr, "all ddb_get requests failed\n" );
+		return false;
+	}
 	
 	PyObject *cap = PyDict_GetItemString( ret, "ConsumedCapacityUnits" ); // borrowed
 	PyObject *ret_items = PyDict_GetItemString( ret, "Item" ); // borrowed
