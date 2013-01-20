@@ -2,391 +2,439 @@
 // Author: David Evans
 // Based on code from 9apps
 
-#define AWS_REGION "eu-west-1"
-#define AWS_KEYID "your key here"
-#define AWS_SECRET "your key secret here"
-
-/* You should have an IAM Policy for the user above which is similar to this:
-{
-	"Statement": [
-	{
-		"Sid": "MyQueuePermissions",
-		"Action": [
-			"sqs:DeleteMessage",
-			"sqs:GetQueueAttributes",
-			"sqs:GetQueueUrl",
-			"sqs:ReceiveMessage",
-			"sqs:SendMessage"
-		],
-		"Effect": "Allow",
-		"Resource": [
-			"arn:aws:sqs:eu-west-1:*:mytestqueue"
-		]
-	},
-	{
-		"Sid": "MyDatabasePermissions",
-		"Action": [
-			"dynamodb:GetItem",
-			"dynamodb:UpdateItem"
-		],
-		"Effect": "Allow",
-		"Resource": [
-			"arn:aws:dynamodb:eu-west-1:*:table/mytestdatabase"
-		]
-	}
-	]
-}
- */
-
+// must include python before botoc
 #include <Python/python.h>
 //#include <python2.7/Python.h>
 
-#include "aws_static.h"
+#include "botoc_sqs.h"
+#include "botoc_ddb.h"
 
 #include <stdio.h>
 
-void print_key_values( FILE *fp, const std::vector<ddb_item> &items );
-void print_keys( FILE *fp, const std::vector<ddb_item> &items );
 
-void test_sqs( void );
-void test_ddb( void );
+/* prototypes */
 
-void print_key_values( FILE *fp, const std::vector<ddb_item> &items ) {
-	if( items.size( ) > 0 ) {
-		fprintf( fp, "[\n" );
-		for( std::size_t i = 0, e = items.size( ); i < e; ++ i ) {
-			fprintf( fp, "  \"%s\" => [%c]: \"%.*s\"\n", items[i].name( ).c_str( ), DDBTypeS[items[i].type()], (int) items[i].value_length( ), items[i].value( ) );
-		}
-		fprintf( fp, "]" );
-	} else {
-		fprintf( fp, "[]" );
-	}
+void print_key_values( FILE *fp, const botoc::ddb::item_list_t &items ) throw( );
+void print_keys( FILE *fp, const botoc::ddb::item_list_t &items ) throw( );
+
+void test_sqs( const botoc::string_t &queue ) throw( );
+void test_ddb( const botoc::string_t &database ) throw( );
+
+
+/* implementation */
+
+int main( void ) {
+	fprintf( stdout, "begin.\n\n" );
+	
+	botoc::set_region( "eu-west-1" );
+	botoc::set_iam_user( "user_key_here", "user_secret_here" );
+	
+	/* You should have an IAM Policy for the user above which is similar to this:
+	 * {
+	 * 	"Statement": [
+	 * 	{
+	 * 		"Sid": "MyQueuePermissions",
+	 * 		"Action": [
+	 * 			"sqs:DeleteMessage",
+	 * 			"sqs:GetQueueAttributes",
+	 * 			"sqs:GetQueueUrl",
+	 * 			"sqs:ReceiveMessage",
+	 * 			"sqs:SendMessage"
+	 * 		],
+	 * 		"Effect": "Allow",
+	 * 		"Resource": [
+	 * 			"arn:aws:sqs:eu-west-1:*:mytestqueue"
+	 * 		]
+	 * 	},
+	 * 	{
+	 * 		"Sid": "MyDatabasePermissions",
+	 * 		"Action": [
+	 * 			"dynamodb:GetItem",
+	 * 			"dynamodb:UpdateItem"
+	 * 		],
+	 * 		"Effect": "Allow",
+	 * 		"Resource": [
+	 * 			"arn:aws:dynamodb:eu-west-1:*:table/mytestdatabase"
+	 * 		]
+	 * 	}
+	 * 	]
+	 * }
+	 */
+	
+	test_sqs( "mytestqueue" );
+	test_ddb( "mytestdatabase" );
+	
+	fprintf( stdout, "done.\n\n" );
+	fflush( stdout );
+	
+    return 0;
 }
 
-void print_keys( FILE *fp, const std::vector<ddb_item> &items ) {
-	if( items.size( ) > 0 ) {
-		fprintf( fp, "[\n" );
-		for( std::size_t i = 0, e = items.size( ); i < e; ++ i ) {
-			fprintf( fp, "  \"%s\"\n", items[i].name( ).c_str( ) );
-		}
-		fprintf( fp, "]" );
-	} else {
-		fprintf( fp, "[]" );
-	}
-}
-
-void test_sqs( void ) {
+void test_sqs( const botoc::string_t &queue ) throw( ) {
 	fprintf( stdout, "begin SQS.\n" );
 	
-	std::string queue( "mytestqueue" );
-	std::string msg;
+	LOCALBLOCK {
+		fprintf( stdout, "botoc::sqs::get( \"%.*s\", body, 10, 4 )\n", SIZED_STRING(queue) );
+		botoc::string_t body;
+		botoc::handle_t handle = botoc::sqs::get( queue, body, 10, 4 );
+		if( handle != NULL ) {
+			fprintf( stdout, "  ok. result = %.*s\n", SIZED_STRING(body) );
+			fprintf( stdout, "botoc::sqs::remove( \"%.*s\", &handle )\n", SIZED_STRING(queue) );
+			if( botoc::sqs::remove( queue, handle ) ) {
+				fprintf( stdout, "  ok.\n" );
+			} else {
+				fprintf( stdout, "  fail.\n" );
+			}
+		} else {
+			fprintf( stdout, "  nothing.\n" );
+		}
+	}
 	
-	void *handle;
-	std::string body;
-	fprintf( stdout, "sqs_get\n" );
-	if( sqs_get( queue, &handle, body, 10, 4 ) ) {
-		fprintf( stdout, "  ok. result = %s\n", body.c_str( ) );
-		fprintf( stdout, "sqs_delete( \"%s\", &handle )\n", queue.c_str( ) );
-		if( sqs_delete( queue, &handle ) ) {
+	LOCALBLOCK {
+		fprintf( stdout, "botoc::sqs::put( \"%.*s\", \"Hello World\" )\n", SIZED_STRING(queue) );
+		if( botoc::sqs::put( queue, "Hello World" ) ) {
 			fprintf( stdout, "  ok.\n" );
 		} else {
 			fprintf( stdout, "  fail.\n" );
 		}
-	} else {
-		fprintf( stdout, "  nothing.\n" );
-	}
-	
-	msg = "Hello World";
-	
-	fprintf( stdout, "sqs_put\n" );
-	if( sqs_put( queue, msg ) ) {
-		fprintf( stdout, "  ok.\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
 	}
 	
 	fprintf( stdout, "done SQS.\n\n" );
 	fflush( stdout );
 }
 
-void test_ddb( void ) {
+void test_ddb( const botoc::string_t &database ) throw( ) {
 	fprintf( stdout, "begin DDB.\n" );
 	
-	std::string database( "mytestdatabase" );
-	std::string key;
-	std::vector<ddb_item> items;
-	std::vector<ddb_item> expect;
-	
-	
-	key = "mykey2";
-	
-	fprintf( stdout, "ddb_get( \"%s\", \"%s\", true, ", database.c_str( ), key.c_str( ) );
-	print_keys( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_get( database, key, true, items ) ) {
-		fprintf( stdout, "  ok. values = " );
-		print_key_values( stdout, items );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		fprintf( stdout, "botoc::ddb::get( \"%.*s\", \"mykey2\", true, ", SIZED_STRING(database) );
+		print_keys( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::get( database, "mykey2", true, items ) ) {
+			fprintf( stdout, "  ok. values = " );
+			print_key_values( stdout, items );
+			fprintf( stdout, "\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
 		fprintf( stdout, "\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
 	
-	
-	key = "mykeyGone";
-	
-	fprintf( stdout, "ddb_get( \"%s\", \"%s\", true, ", database.c_str( ), key.c_str( ) );
-	print_keys( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_get( database, key, true, items ) ) {
-		fprintf( stdout, "  ok. values = " );
-		print_key_values( stdout, items );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		fprintf( stdout, "botoc::ddb::get( \"%.*s\", \"mykeyGone\", true, ", SIZED_STRING(database) );
+		print_keys( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::get( database, "mykeyGone", true, items ) ) {
+			fprintf( stdout, "  ok. values = " );
+			print_key_values( stdout, items );
+			fprintf( stdout, "\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
 		fprintf( stdout, "\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
 	
-	
-	key = "mykey1";
-	float five = 5;
-	{ ddb_item itm( "Name", "Fred" ); items.push_back( itm ); }
-	{ ddb_item itm( "Age", 32 ); items.push_back( itm ); }
-	{ ddb_item itm( "Data", &five, sizeof( five ), DDB_BINARY ); items.push_back( itm ); }
-	
-	fprintf( stdout, "ddb_update( \"%s\", \"%s\", ", database.c_str( ), key.c_str( ) );
-	print_key_values( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_update( database, key, items ) ) {
-		fprintf( stdout, "  ok.\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
-	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
-	
-	
-	key = "mykey1";
-	
-	fprintf( stdout, "ddb_get( \"%s\", \"%s\", true, ", database.c_str( ), key.c_str( ) );
-	print_keys( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_get( database, key, true, items ) ) {
-		fprintf( stdout, "  ok. values = " );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		items.push_back( botoc::ddb::item( "Name", "Fred" ) );
+		items.push_back( botoc::ddb::item( "Age", 32 ) );
+		float five = 5;
+		items.push_back( botoc::ddb::item( "Data", &five, sizeof( five ), botoc::ddb::BINARY ) );
+		items.push_back( botoc::ddb::item( "Friends", botoc::ddb::STRINGSET ) );
+		items.back( ).add_item( "Bob" );
+		items.back( ).add_item( "Bill" );
+		items.push_back( botoc::ddb::item( "Pets", botoc::ddb::STRINGSET ) );
+		items.back( ).add_item( "Poochey" );
+		items.back( ).add_item( "Tiddles" );
+		
+		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey1\", ", SIZED_STRING(database) );
 		print_key_values( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::update( database, "mykey1", items ) ) {
+			fprintf( stdout, "  ok.\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
 		fprintf( stdout, "\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
 	
-	key = "mykey1";
-	{ ddb_item itm( "Age" ); items.push_back( itm ); }
-	{ ddb_item itm( "Data" ); items.push_back( itm ); }
-	{ ddb_item itm( "What" ); items.push_back( itm ); }
-	
-	fprintf( stdout, "ddb_get( \"%s\", \"%s\", true, ", database.c_str( ), key.c_str( ) );
-	print_keys( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_get( database, key, true, items ) ) {
-		fprintf( stdout, "  ok. values = " );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		items.push_back( botoc::ddb::item( "Friends", botoc::ddb::STRINGSET, botoc::ddb::ADD ) );
+		items.back( ).add_item( "Tiddles" );
+		items.push_back( botoc::ddb::item( "Pets", botoc::ddb::STRINGSET, botoc::ddb::DELETE ) );
+		items.back( ).add_item( "Tiddles" );
+		
+		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey1\", ", SIZED_STRING(database) );
 		print_key_values( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::update( database, "mykey1", items ) ) {
+			fprintf( stdout, "  ok.\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
 		fprintf( stdout, "\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
 	
-	key = "mykey2";
-	float count[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-	{ ddb_item itm( "Name", "John" ); items.push_back( itm ); }
-	{ ddb_item itm( "Age", 28 ); items.push_back( itm ); }
-	{ ddb_item itm( "Data", &count, sizeof( count ), DDB_BINARY ); items.push_back( itm ); }
-	
-	fprintf( stdout, "ddb_update( \"%s\", \"%s\", ", database.c_str( ), key.c_str( ) );
-	print_key_values( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_update( database, key, items ) ) {
-		fprintf( stdout, "  ok.\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		fprintf( stdout, "botoc::ddb::get( \"%.*s\", \"mykey1\", true, ", SIZED_STRING(database) );
+		print_keys( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::get( database, "mykey1", true, items ) ) {
+			fprintf( stdout, "  ok. values = " );
+			print_key_values( stdout, items );
+			fprintf( stdout, "\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
+		fprintf( stdout, "\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
 	
-	key = "mykey2";
-	{ ddb_item itm( "Age", 25 ); items.push_back( itm ); }
-	
-	fprintf( stdout, "ddb_update( \"%s\", \"%s\", ", database.c_str( ), key.c_str( ) );
-	print_key_values( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_update( database, key, items ) ) {
-		fprintf( stdout, "  ok.\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		items.push_back( botoc::ddb::item( "Age" ) );
+		items.push_back( botoc::ddb::item( "Data" ) );
+		items.push_back( botoc::ddb::item( "What" ) );
+		
+		fprintf( stdout, "botoc::ddb::get( \"%.*s\", \"mykey1\", true, ", SIZED_STRING(database) );
+		print_keys( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::get( database, "mykey1", true, items ) ) {
+			fprintf( stdout, "  ok. values = " );
+			print_key_values( stdout, items );
+			fprintf( stdout, "\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
+		fprintf( stdout, "\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
 	
-	fprintf( stdout, "ddb_get( \"%s\", \"%s\", true, ", database.c_str( ), key.c_str( ) );
-	print_keys( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_get( database, key, true, items ) ) {
-		fprintf( stdout, "  ok. values = " );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		float count[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+		items.push_back( botoc::ddb::item( "Name", "John" ) );
+		items.push_back( botoc::ddb::item( "Age", 28 ) );
+		items.push_back( botoc::ddb::item( "Data", &count, sizeof( count ), botoc::ddb::BINARY ) );
+		
+		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey2\", ", SIZED_STRING(database) );
 		print_key_values( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::update( database, "mykey2", items ) ) {
+			fprintf( stdout, "  ok.\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
 		fprintf( stdout, "\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
 	
-	key = "mykey2";
-	{ ddb_item itm( "Age", 30 ); items.push_back( itm ); }
-	{ ddb_item itm( "Age", 25 ); expect.push_back( itm ); }
-	
-	fprintf( stdout, "ddb_update( \"%s\", \"%s\", ", database.c_str( ), key.c_str( ) );
-	print_key_values( stdout, items );
-	fprintf( stdout, ", &" );
-	print_key_values( stdout, expect );
-	fprintf( stdout, " ):\n" );
-	if( ddb_update( database, key, items, &expect ) ) {
-		fprintf( stdout, "  ok.\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
-	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
-	
-	key = "mykey2";
-	{ ddb_item itm( "Age", 40 ); items.push_back( itm ); }
-	{ ddb_item itm( "Age", 25 ); expect.push_back( itm ); }
-	
-	fprintf( stdout, "ddb_update( \"%s\", \"%s\", ", database.c_str( ), key.c_str( ) );
-	print_key_values( stdout, items );
-	fprintf( stdout, ", &" );
-	print_key_values( stdout, expect );
-	fprintf( stdout, " ):\n" );
-	if( ddb_update( database, key, items, &expect ) ) {
-		fprintf( stdout, "  ok.\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
-	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
-	
-	key = "mykey2";
-	{ ddb_item itm( "Age", 50 ); items.push_back( itm ); }
-	{ ddb_item itm( "Age", 10 ); expect.push_back( itm ); }
-	
-	fprintf( stdout, "ddb_update( \"%s\", \"%s\", ", database.c_str( ), key.c_str( ) );
-	print_key_values( stdout, items );
-	fprintf( stdout, ", &" );
-	print_key_values( stdout, expect );
-	fprintf( stdout, " ):\n" );
-	if( ddb_update( database, key, items, &expect ) ) {
-		fprintf( stdout, "  ok.\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
-	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
-	
-	key = "mykey2";
-	
-	fprintf( stdout, "ddb_get( \"%s\", \"%s\", false, ", database.c_str( ), key.c_str( ) );
-	print_keys( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_get( database, key, false, items ) ) {
-		fprintf( stdout, "  ok. values = " );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		items.push_back( botoc::ddb::item( "Age", 25 ) );
+		
+		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey2\", ", SIZED_STRING(database) );
 		print_key_values( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::update( database, "mykey2", items ) ) {
+			fprintf( stdout, "  ok.\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
 		fprintf( stdout, "\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
+	
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		items.push_back( botoc::ddb::item( "Age", 1, botoc::ddb::ADD ) );
+		
+		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey2\", ", SIZED_STRING(database) );
+		print_key_values( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::update( database, "mykey2", items ) ) {
+			fprintf( stdout, "  ok.\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
+		fprintf( stdout, "\n" );
+	}
+	
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		fprintf( stdout, "botoc::ddb::get( \"%.*s\", \"mykey2\", true, ", SIZED_STRING(database) );
+		print_keys( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::get( database, "mykey2", true, items ) ) {
+			fprintf( stdout, "  ok. values = " );
+			print_key_values( stdout, items );
+			fprintf( stdout, "\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
+		fprintf( stdout, "\n" );
+	}
+	
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		botoc::ddb::item_list_t expect;
+		items.push_back( botoc::ddb::item( "Age", 30 ) );
+		expect.push_back( botoc::ddb::item( "Age", 26 ) );
+		
+		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey2\", ", SIZED_STRING(database) );
+		print_key_values( stdout, items );
+		fprintf( stdout, ", &" );
+		print_key_values( stdout, expect );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::update( database, "mykey2", items, &expect ) ) {
+			fprintf( stdout, "  ok.\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
+		fprintf( stdout, "\n" );
+	}
+	
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		botoc::ddb::item_list_t expect;
+		items.push_back( botoc::ddb::item( "Age", 40 ) );
+		expect.push_back( botoc::ddb::item( "Age", 26 ) );
+		
+		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey2\", ", SIZED_STRING(database) );
+		print_key_values( stdout, items );
+		fprintf( stdout, ", &" );
+		print_key_values( stdout, expect );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::update( database, "mykey2", items, &expect ) ) {
+			fprintf( stdout, "  ok.\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
+		fprintf( stdout, "\n" );
+	}
+	
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		botoc::ddb::item_list_t expect;
+		items.push_back( botoc::ddb::item( "Age", 50 ) );
+		expect.push_back( botoc::ddb::item( "Age", 10 ) );
+		
+		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey2\", ", SIZED_STRING(database) );
+		print_key_values( stdout, items );
+		fprintf( stdout, ", &" );
+		print_key_values( stdout, expect );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::update( database, "mykey2", items, &expect ) ) {
+			fprintf( stdout, "  ok.\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
+		fprintf( stdout, "\n" );
+	}
+	
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		fprintf( stdout, "botoc::ddb::get( \"%.*s\", \"mykey2\", false, ", SIZED_STRING(database) );
+		print_keys( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::get( database, "mykey2", false, items ) ) {
+			fprintf( stdout, "  ok. values = " );
+			print_key_values( stdout, items );
+			fprintf( stdout, "\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
+		fprintf( stdout, "\n" );
+	}
 	
 	fprintf( stdout, "sleep( 1 )\n" );
 	sleep( 1 );
 	
-	key = "mykey2";
-	
-	fprintf( stdout, "ddb_get( \"%s\", \"%s\", false, ", database.c_str( ), key.c_str( ) );
-	print_keys( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_get( database, key, false, items ) ) {
-		fprintf( stdout, "  ok. values = " );
-		print_key_values( stdout, items );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		fprintf( stdout, "botoc::ddb::get( \"%.*s\", \"mykey2\", false, ", SIZED_STRING(database) );
+		print_keys( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::get( database, "mykey2", false, items ) ) {
+			fprintf( stdout, "  ok. values = " );
+			print_key_values( stdout, items );
+			fprintf( stdout, "\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
 		fprintf( stdout, "\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
 	
-	key = "mykey2";
-	{ ddb_item itm( "Age", 100 ); items.push_back( itm ); }
-	
-	fprintf( stdout, "ddb_update( \"%s\", \"%s\", ", database.c_str( ), key.c_str( ) );
-	print_key_values( stdout, items );
-	fprintf( stdout, ", &" );
-	print_key_values( stdout, expect );
-	fprintf( stdout, " ):\n" );
-	if( ddb_update( database, key, items, &expect ) ) {
-		fprintf( stdout, "  ok.\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
-	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
-	
-	key = "mykey2";
-	
-	fprintf( stdout, "ddb_get( \"%s\", \"%s\", false, ", database.c_str( ), key.c_str( ) );
-	print_keys( stdout, items );
-	fprintf( stdout, " ):\n" );
-	if( ddb_get( database, key, false, items ) ) {
-		fprintf( stdout, "  ok. values = " );
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		items.push_back( botoc::ddb::item( "Age", 100 ) );
+		botoc::ddb::item_list_t expect;
+		
+		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey2\", ", SIZED_STRING(database) );
 		print_key_values( stdout, items );
+		fprintf( stdout, ", &" );
+		print_key_values( stdout, expect );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::update( database, "mykey2", items, &expect ) ) {
+			fprintf( stdout, "  ok.\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
 		fprintf( stdout, "\n" );
-	} else {
-		fprintf( stdout, "  fail.\n" );
 	}
-	items.clear( );
-	expect.clear( );
-	fprintf( stdout, "\n" );
+	
+	LOCALBLOCK {
+		botoc::ddb::item_list_t items;
+		fprintf( stdout, "botoc::ddb::get( \"%.*s\", \"mykey2\", false, ", SIZED_STRING(database) );
+		print_keys( stdout, items );
+		fprintf( stdout, " ):\n" );
+		if( botoc::ddb::get( database, "mykey2", false, items ) ) {
+			fprintf( stdout, "  ok. values = " );
+			print_key_values( stdout, items );
+			fprintf( stdout, "\n" );
+		} else {
+			fprintf( stdout, "  fail.\n" );
+		}
+		fprintf( stdout, "\n" );
+	}
 	
 	fprintf( stdout, "done DDB.\n\n" );
 	fflush( stdout );
 }
 
-int main( void ) {
-	fprintf( stdout, "begin.\n\n" );
-	
-	test_sqs( );
-	test_ddb( );
-	
-	fprintf( stdout, "done.\n\n" );
-	fflush( stdout );
-	
-    return 0;
+/* helper functions */
+
+void print_key_values( FILE *fp, const botoc::ddb::item_list_t &items ) throw( ) {
+	if( items.size( ) > 0 ) {
+		fprintf( fp, "{\n" );
+		for( std::size_t i = 0, e = items.size( ); i < e; ++ i ) {
+			if( items[i].type( ) == botoc::ddb::UNKNOWN ) {
+				fprintf( fp, "  \"%.*s\" => ?\n", SIZED_STRING(items[i].name( )) );
+			} else if( (items[i].type( ) & botoc::ddb::SET) ) {
+				fprintf( fp, "  \"%.*s\" => [%s] (%s): [\n", SIZED_STRING(items[i].name( )), items[i].type_string( ), items[i].action_string( ) );
+				const botoc::string_list_t &o = items[i].list_knowntype( );
+				for( std::size_t j = 0, f = o.size( ); j < f; ++ j ) {
+					fprintf( fp, "    \"%.*s\"\n", SIZED_STRING(o[j]) );
+				}
+				fprintf( fp, "  ]\n" );
+			} else {
+				fprintf( fp, "  \"%.*s\" => [%s] (%s): \"%.*s\"\n", SIZED_STRING(items[i].name( )), items[i].type_string( ), items[i].action_string( ), SIZED_STRING(items[i].value_knowntype( )) );
+			}
+		}
+		fprintf( fp, "}" );
+	} else {
+		fprintf( fp, "{}" );
+	}
+}
+
+void print_keys( FILE *fp, const botoc::ddb::item_list_t &items ) throw( ) {
+	if( items.size( ) > 0 ) {
+		fprintf( fp, "[\n" );
+		for( std::size_t i = 0, e = items.size( ); i < e; ++ i ) {
+			fprintf( fp, "  \"%.*s\"\n", SIZED_STRING(items[i].name( )) );
+		}
+		fprintf( fp, "]" );
+	} else {
+		fprintf( fp, "[]" );
+	}
 }

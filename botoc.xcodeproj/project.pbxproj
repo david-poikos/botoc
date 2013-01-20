@@ -12,7 +12,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2FCA70F116A99BB800ECDBA3 /* aws_static.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = aws_static.h; sourceTree = "<group>"; };
+		2FC4563B16A9F05900BF7786 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
+		2FC772F716AC3EB9003F9406 /* botoc_sqs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = botoc_sqs.h; sourceTree = "<group>"; };
+		2FC772F916AC3F74003F9406 /* botoc_common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = botoc_common.h; sourceTree = "<group>"; };
+		2FC772FB16AC44A3003F9406 /* botoc_ddb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = botoc_ddb.h; sourceTree = "<group>"; };
 		2FCA70F316A99BC400ECDBA3 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		2FCA70F916A99BE300ECDBA3 /* botoc_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = botoc_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FCA710516A99C5800ECDBA3 /* Python.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Python.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/Python.framework; sourceTree = DEVELOPER_DIR; };
@@ -43,7 +46,10 @@
 		2FCA70EF16A99BA200ECDBA3 /* library */ = {
 			isa = PBXGroup;
 			children = (
-				2FCA70F116A99BB800ECDBA3 /* aws_static.h */,
+				2FC772F916AC3F74003F9406 /* botoc_common.h */,
+				2FC772F716AC3EB9003F9406 /* botoc_sqs.h */,
+				2FC772FB16AC44A3003F9406 /* botoc_ddb.h */,
+				2FC4563B16A9F05900BF7786 /* README.md */,
 			);
 			name = library;
 			sourceTree = "<group>";
@@ -268,6 +274,7 @@
 				2FCA710316A99BE300ECDBA3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
