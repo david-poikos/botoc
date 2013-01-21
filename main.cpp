@@ -26,8 +26,8 @@ void test_ddb( const botoc::string_t &database ) throw( );
 int main( void ) {
 	fprintf( stdout, "begin.\n\n" );
 	
-	botoc::set_region( "eu-west-1" );
-	botoc::set_iam_user( "user_key_here", "user_secret_here" );
+	(void) botoc::set_region( "eu-west-1" );
+	(void) botoc::set_iam_user( "user_key_here", "user_secret_here" );
 	
 	/* You should have an IAM Policy for the user above which is similar to this:
 	 * {
@@ -36,7 +36,6 @@ int main( void ) {
 	 * 		"Sid": "MyQueuePermissions",
 	 * 		"Action": [
 	 * 			"sqs:DeleteMessage",
-	 * 			"sqs:GetQueueAttributes",
 	 * 			"sqs:GetQueueUrl",
 	 * 			"sqs:ReceiveMessage",
 	 * 			"sqs:SendMessage"
@@ -143,11 +142,11 @@ void test_ddb( const botoc::string_t &database ) throw( ) {
 		float five = 5;
 		items.push_back( botoc::ddb::item( "Data", &five, sizeof( five ), botoc::ddb::BINARY ) );
 		items.push_back( botoc::ddb::item( "Friends", botoc::ddb::STRINGSET ) );
-		items.back( ).add_item( "Bob" );
-		items.back( ).add_item( "Bill" );
+		(void) items.back( ).add_item( "Bob" );
+		(void) items.back( ).add_item( "Bill" );
 		items.push_back( botoc::ddb::item( "Pets", botoc::ddb::STRINGSET ) );
-		items.back( ).add_item( "Poochey" );
-		items.back( ).add_item( "Tiddles" );
+		(void) items.back( ).add_item( "Poochey" );
+		(void) items.back( ).add_item( "Tiddles" );
 		
 		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey1\", ", SIZED_STRING(database) );
 		print_key_values( stdout, items );
@@ -163,9 +162,9 @@ void test_ddb( const botoc::string_t &database ) throw( ) {
 	LOCALBLOCK {
 		botoc::ddb::item_list_t items;
 		items.push_back( botoc::ddb::item( "Friends", botoc::ddb::STRINGSET, botoc::ddb::ADD ) );
-		items.back( ).add_item( "Tiddles" );
+		(void) items.back( ).add_item( "Tiddles" );
 		items.push_back( botoc::ddb::item( "Pets", botoc::ddb::STRINGSET, botoc::ddb::DELETE ) );
-		items.back( ).add_item( "Tiddles" );
+		(void) items.back( ).add_item( "Tiddles" );
 		
 		fprintf( stdout, "botoc::ddb::update( \"%.*s\", \"mykey1\", ", SIZED_STRING(database) );
 		print_key_values( stdout, items );

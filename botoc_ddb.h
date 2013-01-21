@@ -93,8 +93,8 @@ namespace botoc {
 			data_type _type;
 			data_action _action;
 			union union_t {
-				string_t value;
-				string_list_t list;
+				char value[sizeof(string_t)];
+				char list[sizeof(string_list_t)];
 				inline union_t( void ) throw( ) { }
 				inline ~union_t( void ) throw( ) { }
 			} _data;
@@ -126,31 +126,51 @@ namespace botoc {
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline size_t size( void ) const throw( ) {
-				return unlikely( _type == UNKNOWN ) ? 0 :
-				((_type & SET) ? _data.list.size( ) : _data.value.size( ));
+			inline const string_t *value( void ) const throw( ) {
+				return ((_type & SET) || _type == UNKNOWN) ?
+				NULL : ((string_t *) &_data.value);
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const string_t *value( void ) const throw( ) {
-				return ((_type & SET) || _type == UNKNOWN) ?
-				NULL : &_data.value;
+			inline string_t &_value( void ) throw( ) {
+				return *((string_t *) &_data.value);
+			}
+			
+			__attribute__((pure,warn_unused_result,always_inline))
+			inline const string_t &_value( void ) const throw( ) {
+				return *((string_t *) &_data.value);
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
 			inline const string_t &value_knowntype( void ) const throw( ) {
-				return _data.value;
+				return _value( );
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
 			inline const string_list_t *list( void ) const throw( ) {
 				return ((_type & SET) && _type != UNKNOWN) ?
-				&_data.list : NULL;
+				((string_list_t *) &_data.list) : NULL;
+			}
+			
+			__attribute__((pure,warn_unused_result,always_inline))
+			inline string_list_t &_list( void ) throw( ) {
+				return *((string_list_t *) &_data.list);
+			}
+			
+			__attribute__((pure,warn_unused_result,always_inline))
+			inline const string_list_t &_list( void ) const throw( ) {
+				return *((string_list_t *) &_data.list);
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
 			inline const string_list_t &list_knowntype( void ) const throw( ) {
-				return _data.list;
+				return _list( );
+			}
+			
+			__attribute__((pure,warn_unused_result,always_inline))
+			inline size_t size( void ) const throw( ) {
+				return unlikely( _type == UNKNOWN ) ? 0 :
+				((_type & SET) ? _list( ).size( ) : _value( ).size( ));
 			}
 			
 			/*
@@ -231,33 +251,33 @@ namespace botoc {
 				}
 				if( type == UNKNOWN ) {
 					if( (_type & SET) ) {
-						_data.list.~string_list_t( );
+						_list( ).~string_list_t( );
 					} else {
-						_data.value.~string_t( );
+						_value( ).~string_t( );
 					}
 				} else if( _type == UNKNOWN ) {
 					if( (type & SET) ) {
 						try {
-							(void) new( &_data.list ) string_list_t( );
+							(void) new( &_list( ) ) string_list_t( );
 						} catch( ... ) { return false; }
 					} else {
 						try {
-							(void) new( &_data.value ) string_t( );
+							(void) new( &_value( ) ) string_t( );
 						} catch( ... ) { return false; }
 					}
 				} else if( (_type & SET) != (type & SET) ) {
 					if( (type & SET) ) {
-						_data.value.~string_t( );
+						_value( ).~string_t( );
 						try {
-							(void) new( &_data.list ) string_list_t( );
+							(void) new( &_list( ) ) string_list_t( );
 						} catch( ... ) {
 							_type = UNKNOWN;
 							return false;
 						}
 					} else {
-						_data.list.~string_list_t( );
+						_list( ).~string_list_t( );
 						try {
-							(void) new( &_data.value ) string_t( );
+							(void) new( &_value( ) ) string_t( );
 						} catch( ... ) {
 							_type = UNKNOWN;
 							return false;
@@ -291,7 +311,7 @@ namespace botoc {
 					return false;
 				}
 				try {
-					_data.value.assign( value );
+					_value( ).assign( value );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -305,7 +325,7 @@ namespace botoc {
 					return false;
 				}
 				try {
-					_data.value.assign( value );
+					_value( ).assign( value );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -316,7 +336,7 @@ namespace botoc {
 					return false;
 				}
 				try {
-					_data.value.assign( value );
+					_value( ).assign( value );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -330,7 +350,7 @@ namespace botoc {
 					return false;
 				}
 				try {
-					_data.value.assign( value );
+					_value( ).assign( value );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -341,7 +361,7 @@ namespace botoc {
 					return false;
 				}
 				try {
-					_data.value.assign( value, length );
+					_value( ).assign( value, length );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -355,7 +375,7 @@ namespace botoc {
 					return false;
 				}
 				try {
-					_data.value.assign( value, length );
+					_value( ).assign( value, length );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -366,13 +386,13 @@ namespace botoc {
 					return false;
 				}
 				if( _type == BINARY ) {
-					return encode_binary( value.data( ), value.size( ), _data.value );
+					return encode_binary( value.data( ), value.size( ), _value( ) );
 				} else {
 					try {
-						_data.value.assign( value );
+						_value( ).assign( value );
 					} catch( ... ) { return false; }
+					return true;
 				}
-				return true;
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
@@ -381,13 +401,13 @@ namespace botoc {
 					return false;
 				}
 				if( _type == BINARY ) {
-					return encode_binary( value, strlen( value ), _data.value );
+					return encode_binary( value, (size_t) strlen( value ), _value( ) );
 				} else {
 					try {
-						_data.value.assign( value );
+						_value( ).assign( value );
 					} catch( ... ) { return false; }
+					return true;
 				}
-				return true;
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
@@ -396,13 +416,13 @@ namespace botoc {
 					return false;
 				}
 				if( _type == BINARY ) {
-					return encode_binary( value, length, _data.value );
+					return encode_binary( value, length, _value( ) );
 				} else {
 					try {
-						_data.value.assign( (const char *) value, length );
+						_value( ).assign( (const char *) value, length );
 					} catch( ... ) { return false; }
+					return true;
 				}
-				return true;
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
@@ -414,13 +434,13 @@ namespace botoc {
 					return false;
 				}
 				if( _type == BINARY ) {
-					return encode_binary( value.data( ), value.size( ), _data.value );
+					return encode_binary( value.data( ), value.size( ), _value( ) );
 				} else {
 					try {
-						_data.value.assign( value );
+						_value( ).assign( value );
 					} catch( ... ) { return false; }
+					return true;
 				}
-				return true;
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
@@ -432,13 +452,13 @@ namespace botoc {
 					return false;
 				}
 				if( _type == BINARY ) {
-					return encode_binary( value, strlen( value ), _data.value );
+					return encode_binary( value, (size_t) strlen( value ), _value( ) );
 				} else {
 					try {
-						_data.value.assign( value );
+						_value( ).assign( value );
 					} catch( ... ) { return false; }
+					return true;
 				}
-				return true;
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
@@ -450,13 +470,13 @@ namespace botoc {
 					return false;
 				}
 				if( _type == BINARY ) {
-					return encode_binary( value, length, _data.value );
+					return encode_binary( value, length, _value( ) );
 				} else {
 					try {
-						_data.value.assign( (const char *) value, length );
+						_value( ).assign( (const char *) value, length );
 					} catch( ... ) { return false; }
+					return true;
 				}
-				return true;
 			}
 			
 			__attribute__((warn_unused_result,format(printf,2,3)))
@@ -472,23 +492,23 @@ namespace botoc {
 				va_end( v );
 				
 				if( unlikely( sz < 0 ) ) {
-					_data.value.clear( );
+					_value( ).clear( );
 					return true;
 				}
 				
 				try {
-					_data.value.resize( (size_t) sz ); // slower than reserve, but std::string optimises weirdly otherwise :(
+					_value( ).resize( (size_t) sz ); // slower than reserve, but std::string optimises weirdly otherwise :(
 				} catch( ... ) {
 					fprintf( stderr, "set_value_format: reserve failed\n" );
 					return false;
 				}
 				
 				va_start( v, format );
-				const size_t l = (size_t) vsnprintf( const_cast<char *>( _data.value.data( ) ), (size_t) sz, format, v );
+				const size_t l = (size_t) vsnprintf( const_cast<char *>( _value( ).data( ) ), (size_t) sz, format, v );
 				va_end( v );
 				
 				try {
-					_data.value.resize( l );
+					_value( ).resize( l );
 				} catch( ... ) {
 					fprintf( stderr, "set_value_format: resize failed (!)\n" );
 					return false;
@@ -539,7 +559,7 @@ namespace botoc {
 					return false;
 				}
 				try {
-					_data.list.push_back( value );
+					_list( ).push_back( value );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -550,7 +570,7 @@ namespace botoc {
 					return false;
 				}
 				try {
-					_data.list.push_back( string_t( value ) );
+					_list( ).push_back( string_t( value ) );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -561,7 +581,7 @@ namespace botoc {
 					return false;
 				}
 				try {
-					_data.list.push_back( string_t( value, length ) );
+					_list( ).push_back( string_t( value, length ) );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -569,7 +589,7 @@ namespace botoc {
 			__attribute__((always_inline))
 			inline void clear_items( void ) throw( ) {
 				if( _type & SET ) {
-					_data.list.clear( );
+					_list( ).clear( );
 				}
 			}
 			
@@ -581,7 +601,7 @@ namespace botoc {
 				if( unlikely( !set_type( type ) ) ) {
 					return false;
 				}
-				_data.list.clear( );
+				_list( ).clear( );
 				return true;
 			}
 			
@@ -596,6 +616,15 @@ namespace botoc {
 			
 			__attribute__((always_inline))
 			inline explicit item( const string_t &name, data_action action = REPLACE ) throw( ) :
+			_name( name ),
+			_type( UNKNOWN ),
+			_action( action ),
+			_data( )
+			{
+			}
+			
+			__attribute__((always_inline))
+			inline explicit item( const char *name, data_action action = REPLACE ) throw( ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( action ),
@@ -757,26 +786,32 @@ namespace botoc {
 			_action( copy._action ),
 			_data( )
 			{
-				set_type( copy._type );
+				if( unlikely( !set_type( copy._type ) ) ) {
+					std::bad_alloc ex;
+					throw ex;
+				}
 				if( copy._type != UNKNOWN ) {
-					if( copy._type & SET ) {
-						_data.list = copy._data.list;
+					if( (copy._type & SET) ) {
+						_list( ) = copy._list( );
 					} else {
-						_data.value = copy._data.value;
+						_value( ).assign( copy._value( ) );
 					}
 				}
 			}
 			
 			__attribute__((always_inline))
 			inline item &operator =( const item &copy ) throw( std::bad_alloc ) {
-				_name = copy._name;
-				set_type( copy._type );
+				_name.assign( copy._name );
+				if( unlikely( !set_type( copy._type ) ) ) {
+					std::bad_alloc ex;
+					throw ex;
+				}
 				_action = copy._action;
 				if( copy._type != UNKNOWN ) {
-					if( copy._type & SET ) {
-						_data.list = copy._data.list;
+					if( (copy._type & SET) ) {
+						_list( ) = copy._list( );
 					} else {
-						_data.value = copy._data.value;
+						_value( ).assign( copy._value( ) );
 					}
 				}
 				return *this;
@@ -792,34 +827,33 @@ namespace botoc {
 		
 		/* prototypes */
 		
-		static __attribute__((warn_unused_result,unused))
-		static bool update( const string_t &db, const string_t &key, const std::vector<item> &items, const std::vector<item> *expected = NULL ) throw( );
+		__attribute__((warn_unused_result,unused))
+		static bool update( const string_t &db, const string_t &key, const item_list_t &items, const item_list_t *expected = NULL ) throw( );
 		
-		static __attribute__((warn_unused_result,unused))
-		static bool get( const string_t &db, const string_t &key, bool consistent, std::vector<item> &items ) throw( );
+		__attribute__((warn_unused_result,unused))
+		static bool get( const string_t &db, const string_t &key, bool consistent, item_list_t &items ) throw( );
 		
 		__attribute__((always_inline,unused))
 		static inline void disconnect( void ) throw( );
 		
 		/* internal prototypes */
 		
-		static __attribute__((warn_unused_result))
-		PyObject *prep( bool disconnect = false ) throw( );
+		__attribute__((warn_unused_result))
+		static PyObject *prep( bool disconnect = false ) throw( );
 		
-		static __attribute__((warn_unused_result))
-		PyObject *dict_from_items_expect( const std::vector<item> &items ) throw( );
+		__attribute__((warn_unused_result))
+		static PyObject *dict_from_items_expect( const item_list_t &items ) throw( );
 		
-		static __attribute__((warn_unused_result))
-		PyObject *dict_from_items_update( const std::vector<item> &items ) throw( );
+		__attribute__((warn_unused_result))
+		static PyObject *dict_from_items_update( const item_list_t &items ) throw( );
 		
-		static __attribute__((warn_unused_result))
-		PyObject *list_from_items( const std::vector<item> &items ) throw( );
+		__attribute__((warn_unused_result))
+		static PyObject *list_from_items( const item_list_t &items ) throw( );
 		
-		static inline __attribute__((warn_unused_result))
-		bool item_from_dict( PyObject *obj, item &output ) throw( );
+		__attribute__((warn_unused_result))
+		static inline bool item_from_dict( PyObject *obj, item &output ) throw( );
 		
-		static __attribute__((warn_unused_result))
-		void update_from_dict( std::vector<item> &items, PyObject *ret_items ) throw( );
+		static void update_from_dict( item_list_t &items, PyObject *ret_items ) throw( );
 		
 		/* implementation */
 		
@@ -888,7 +922,7 @@ namespace botoc {
 			return layer1;
 		}
 		
-		PyObject *dict_from_items_expect( const std::vector<item> &items ) throw( ) {
+		static PyObject *dict_from_items_expect( const item_list_t &items ) throw( ) {
 			PyObject *r = PyDict_New( );
 			for( size_t i = 0, e = items.size( ); i < e; ++ i ) {
 				const size_t f = items[i].size( );
@@ -904,13 +938,13 @@ namespace botoc {
 					if( (items[i].type( ) & SET) ) {
 						v = PyList_New( (Py_ssize_t) f );
 						for( size_t j = 0; j < f; ++ j ) {
-							const string_t &s = items[i].list_knowntype( )[j];
+							const string_t &s = items[i]._list( )[j];
 							if( s.size( ) > 0 ) {
 								PyList_SET_ITEM( v, j, py_string( s ) );
 							}
 						}
 					} else {
-						v = py_string( items[i].value_knowntype( ) );
+						v = py_string( items[i]._value( ) );
 					}
 					PyDict_SetItemString( o, items[i].type_string( ), v );
 					Py_DECREF( v );
@@ -929,7 +963,7 @@ namespace botoc {
 			return r;
 		}
 		
-		PyObject *dict_from_items_update( const std::vector<item> &items ) throw( ) {
+		static PyObject *dict_from_items_update( const item_list_t &items ) throw( ) {
 			PyObject *r = PyDict_New( );
 			for( size_t i = 0, e = items.size( ); i < e; ++ i ) {
 				const size_t f = items[i].size( );
@@ -951,7 +985,7 @@ namespace botoc {
 					
 					PyObject *v = PyList_New( (Py_ssize_t) f );
 					for( size_t j = 0; j < f; ++ j ) {
-						const string_t &s = items[i].list_knowntype( )[j];
+						const string_t &s = items[i]._list( )[j];
 						if( s.size( ) > 0 ) {
 							PyList_SET_ITEM( v, j, py_string( s ) );
 						}
@@ -968,7 +1002,7 @@ namespace botoc {
 						Py_DECREF( a );
 					}
 					PyObject *o = PyDict_New( );
-					PyObject *s = py_string( items[i].value_knowntype( ) );
+					PyObject *s = py_string( items[i]._value( ) );
 					PyDict_SetItemString( o, items[i].type_string( ), s );
 					Py_DECREF( s );
 					PyDict_SetItemString( t, "Value", o );
@@ -986,7 +1020,7 @@ namespace botoc {
 			return r;
 		}
 		
-		PyObject *list_from_items( const std::vector<item> &items ) throw( ) {
+		static PyObject *list_from_items( const item_list_t &items ) throw( ) {
 			const size_t e = items.size( );
 			PyObject *r = PyList_New( (Py_ssize_t) e );
 			for( size_t i = 0; i < e; ++ i ) {
@@ -1001,7 +1035,7 @@ namespace botoc {
 			return r;
 		}
 		
-		bool item_from_dict( PyObject *obj, item &output ) throw( ) {
+		static inline bool item_from_dict( PyObject *obj, item &output ) throw( ) {
 			if( obj == NULL ) {
 				return false;
 			}
@@ -1026,7 +1060,10 @@ namespace botoc {
 				
 				const size_t l = (size_t) PyList_Size( value );
 				for( size_t i = 0; i < l; ++ i ) {
-					output.add_item( py_cstring( PyList_GET_ITEM( value, i ) ) );
+					if( unlikely( !output.add_item( py_cstring( PyList_GET_ITEM( value, i ) ) ) ) ) {
+						output.clear_items( );
+						return false;
+					}
 				}
 			} else {
 				const char *v = py_cstring( value );
@@ -1034,13 +1071,15 @@ namespace botoc {
 					fprintf( stderr, "malformed record (value is not a string)\n" );
 					return false;
 				}
-				output.set_value( v );
+				if( unlikely( !output.set_value( v ) ) ) {
+					return false;
+				}
 			}
 			output.set_action( REPLACE );
 			return true;
 		}
 		
-		void update_from_dict( std::vector<item> &items, PyObject *ret_items ) throw( ) {
+		static void update_from_dict( item_list_t &items, PyObject *ret_items ) throw( ) {
 			if( items.size( ) == 0 ) {
 				PyObject *key; // borrowed
 				PyObject *itm; // borrowed
@@ -1070,7 +1109,7 @@ namespace botoc {
 			}
 		}
 		
-		static bool update( const string_t &db, const string_t &key, const std::vector<item> &items, const std::vector<item> *expected ) throw( ) {
+		static bool update( const string_t &db, const string_t &key, const item_list_t &items, const item_list_t *expected ) throw( ) {
 			/* http://docs.amazonwebservices.com/amazondynamodb/latest/developerguide/API_UpdateItem.html
 			 * ret = layer1.update_item( [table],
 			 *   {'HashKeyElement':{'S':[key]}},
@@ -1124,7 +1163,7 @@ namespace botoc {
 			return true;
 		}
 		
-		static bool get( const string_t &db, const string_t &key, bool consistent, std::vector<item> &items ) throw( ) {
+		static bool get( const string_t &db, const string_t &key, bool consistent, item_list_t &items ) throw( ) {
 			/* http://docs.amazonwebservices.com/amazondynamodb/latest/developerguide/API_GetItem.html
 			 * layer1.get_item( [database_name], {'HashKeyElement':{'S':[key]}} )
 			 */

@@ -98,8 +98,15 @@ namespace botoc {
 				PyObject *regioninfo_mod = py_import( "boto.regioninfo" );
 				PyObject *sqs_mod = py_import( "boto.sqs.connection" );
 				
-				string_t endpoint( region );
-				endpoint.append( ".queue.amazonaws.com" );
+				string_t endpoint;
+				try {
+					endpoint.assign( region );
+					endpoint.append( ".queue.amazonaws.com" );
+				} catch( ... ) {
+					py_release( regioninfo_mod );
+					py_release( sqs_mod );
+					return NULL;
+				}
 				connection = py_construct( sqs_mod, "SQSConnection",
 					"aws_access_key_id", py_string( user_key ),
 					"aws_secret_access_key", py_string( user_secret ),
@@ -181,7 +188,13 @@ namespace botoc {
 				py_release( msg );
 				return NULL;
 			}
-			body.assign( py_cstring( bod ) );
+			try {
+				body.assign( py_cstring( bod ) );
+			} catch( ... ) {
+				Py_DECREF( bod );
+				Py_DECREF( msg );
+				return NULL;
+			}
 			Py_DECREF( bod );
 			
 			return (handle_t) msg;
@@ -205,7 +218,8 @@ namespace botoc {
 			return py_release_success( ret );
 		}
 		static inline void disconnect( void ) throw( ) {
-			(void) prep( "", true );
+			const string_t t;
+			(void) prep( t, true );
 		}
 	}
 }

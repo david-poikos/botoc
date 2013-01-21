@@ -14,19 +14,16 @@
 
 /* enable fancy compiler extras if they are available */
 
-#ifndef __attribute__
-#  define __attribute__(x)
-#endif
-
-#define LOCALBLOCK
-
-#ifdef __builtin_expect
+#if defined(__GNUC__) && __GNUC__ > 0
 #  define likely(x) __builtin_expect(!!(x),1)
 #  define unlikely(x) __builtin_expect(!!(x),0)
 #else
+#  define __attribute__(x)
 #  define likely(x) x
 #  define unlikely(x) x
 #endif
+
+#define LOCALBLOCK
 
 /* constants */
 
