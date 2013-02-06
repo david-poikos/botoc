@@ -49,23 +49,23 @@ namespace botoc {
 		/* prototypes */
 		
 		__attribute__((const,warn_unused_result,always_inline))
-		static inline const char *string_from_type( const data_type type ) throw( );
+		static inline const char *string_from_type( const data_type type ) _noexcept;
 		
 		__attribute__((const,warn_unused_result,always_inline))
-		static inline const char *string_from_action( const data_action action ) throw( );
+		static inline const char *string_from_action( const data_action action ) _noexcept;
 		
 		__attribute__((pure,warn_unused_result,always_inline))
-		static inline data_type type_from_string( const char *const type ) throw( );
+		static inline data_type type_from_string( const char *const type ) _noexcept;
 		
 		/* implementation */
 		
-		static inline const char *string_from_type( const data_type type ) throw( ) {
+		static inline const char *string_from_type( const data_type type ) _noexcept {
 			return &("S\0\0N\0\0B\0\0\0\0\0SS\0NS\0BS"[type*3]);
 		}
-		static inline const char *string_from_action( const data_action action ) throw( ) {
+		static inline const char *string_from_action( const data_action action ) _noexcept {
 			return &("PUT\0ADD\0DELETE"[action*4]);
 		}
-		static inline data_type type_from_string( const char *const type ) throw( ) {
+		static inline data_type type_from_string( const char *const type ) _noexcept {
 			if( unlikely( type == NULL ) ) {
 				return UNKNOWN;
 			}
@@ -93,88 +93,122 @@ namespace botoc {
 			data_type _type;
 			data_action _action;
 			union union_t {
+#if ALLOW_NONPOD_UNION
+				string_t value;
+				string_list_t list;
+#else
 				char value[sizeof(string_t)];
 				char list[sizeof(string_list_t)];
-				inline union_t( void ) throw( ) { }
-				inline ~union_t( void ) throw( ) { }
+#endif
+				inline union_t( void ) _noexcept { }
+				inline union_t( const union_t& ) _noexcept { }
+				inline ~union_t( void ) _noexcept { }
 			} _data;
 			
 		public:
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const string_t &name( void ) const throw( ) {
+			inline const string_t &name( void ) const _noexcept {
 				return _name;
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline data_type type( void ) const throw( ) {
+			inline data_type type( void ) const _noexcept {
 				return _type;
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const char *type_string( void ) const throw( ) {
+			inline const char *type_string( void ) const _noexcept {
 				return string_from_type( _type );
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline data_action action( void ) const throw( ) {
+			inline data_action action( void ) const _noexcept {
 				return _action;
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const char *action_string( void ) const throw( ) {
+			inline const char *action_string( void ) const _noexcept {
 				return string_from_action( _action );
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const string_t *value( void ) const throw( ) {
+			inline const string_t *value( void ) const _noexcept {
 				return ((_type & SET) || _type == UNKNOWN) ?
-				NULL : ((string_t *) &_data.value);
+#if ALLOW_NONPOD_UNION
+				NULL : &_data.value;
+#else
+				NULL : ((const string_t *) &_data.value);
+#endif
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline string_t &_value( void ) throw( ) {
+			inline string_t &_value( void ) _noexcept {
+#if ALLOW_NONPOD_UNION
+				return _data.value;
+#else
 				return *((string_t *) &_data.value);
+#endif
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const string_t &_value( void ) const throw( ) {
-				return *((string_t *) &_data.value);
+			inline const string_t &_value( void ) const _noexcept {
+#if ALLOW_NONPOD_UNION
+				return _data.value;
+#else
+				return *((const string_t *) &_data.value);
+#endif
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const string_t &value_knowntype( void ) const throw( ) {
+			inline const string_t &value_knowntype( void ) const _noexcept {
 				return _value( );
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const string_list_t *list( void ) const throw( ) {
+			inline const string_list_t *list( void ) const _noexcept {
 				return ((_type & SET) && _type != UNKNOWN) ?
-				((string_list_t *) &_data.list) : NULL;
+#if ALLOW_NONPOD_UNION
+				&_data.list : NULL;
+#else
+				((const string_list_t *) &_data.list) : NULL;
+#endif
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline string_list_t &_list( void ) throw( ) {
+			inline string_list_t &_list( void ) _noexcept {
+#if ALLOW_NONPOD_UNION
+				return _data.list;
+#else
 				return *((string_list_t *) &_data.list);
+#endif
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const string_list_t &_list( void ) const throw( ) {
-				return *((string_list_t *) &_data.list);
+			inline const string_list_t &_list( void ) const _noexcept {
+#if ALLOW_NONPOD_UNION
+				return _data.list;
+#else
+				return *((const string_list_t *) &_data.list);
+#endif
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline const string_list_t &list_knowntype( void ) const throw( ) {
+			inline const string_list_t &list_knowntype( void ) const _noexcept {
+#if ALLOW_NONPOD_UNION
+				return _data.list;
+#else
 				return _list( );
+#endif
 			}
 			
 			__attribute__((pure,warn_unused_result,always_inline))
-			inline size_t size( void ) const throw( ) {
+			inline size_t size( void ) const _noexcept {
 				return unlikely( _type == UNKNOWN ) ? 0 :
 				((_type & SET) ? _list( ).size( ) : _value( ).size( ));
 			}
 			
 			/*
-			 inline float float_value( void ) const throw( ) {
+			 inline float float_value( void ) const _noexcept {
 			 if( _type != NUMBER ) {
 			 return 0.0f / 0.0f;
 			 }
@@ -185,7 +219,7 @@ namespace botoc {
 			 return 0.0f / 0.0f;
 			 }
 			 }
-			 inline double double_value( void ) const throw( ) {
+			 inline double double_value( void ) const _noexcept {
 			 if( _type != NUMBER ) {
 			 return 0.0 / 0.0;
 			 }
@@ -196,7 +230,7 @@ namespace botoc {
 			 return 0.0 / 0.0;
 			 }
 			 }
-			 inline int int_value( void ) const throw( ) {
+			 inline int int_value( void ) const _noexcept {
 			 if( _type != NUMBER ) {
 			 return 0;
 			 }
@@ -207,7 +241,7 @@ namespace botoc {
 			 return 0;
 			 }
 			 }
-			 inline long long_value( void ) const throw( ) {
+			 inline long long_value( void ) const _noexcept {
 			 if( _type != NUMBER ) {
 			 return 0l;
 			 }
@@ -221,7 +255,7 @@ namespace botoc {
 			 */
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_name( const const_string_t &name ) throw( ) {
+			inline bool set_name( const const_string_t &name ) _noexcept {
 				try {
 					_name.assign( name );
 				} catch( ... ) { return false; }
@@ -229,7 +263,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_type( data_type type ) throw( ) {
+			inline bool set_type( data_type type ) _noexcept {
 				if( _type == type ) {
 					return true;
 				}
@@ -273,24 +307,24 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline void set_action( data_action action ) throw( ) {
+			inline void set_action( data_action action ) _noexcept {
 				_action = action;
 			}
 			
 			__attribute__((always_inline))
-			inline void clear_data( void ) throw( ) {
+			inline void clear_data( void ) _noexcept {
 				(void) set_type( UNKNOWN );
 			}
 			
 			__attribute__((always_inline))
-			inline void clear( void ) throw( ) {
+			inline void clear( void ) _noexcept {
 				_name.clear( );
 				clear_data( );
 				_action = REPLACE;
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( const const_string_t &value ) throw( ) {
+			inline bool set_value( const const_string_t &value ) _noexcept {
 				if( unlikely( _type == UNKNOWN || (_type & SET) ) ) {
 					return false;
 				}
@@ -301,7 +335,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( const const_string_t &value, data_type type ) throw( ) {
+			inline bool set_value( const const_string_t &value, data_type type ) _noexcept {
 				if( unlikely( type == UNKNOWN || (type & SET) ) ) {
 					return false;
 				}
@@ -315,7 +349,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( const char *value ) throw( ) {
+			inline bool set_value( const char *value ) _noexcept {
 				if( unlikely( _type == UNKNOWN || (_type & SET) ) ) {
 					return false;
 				}
@@ -326,7 +360,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( const char *value, data_type type ) throw( ) {
+			inline bool set_value( const char *value, data_type type ) _noexcept {
 				if( unlikely( type == UNKNOWN || (type & SET) ) ) {
 					return false;
 				}
@@ -340,7 +374,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( const char *value, size_t length ) throw( ) {
+			inline bool set_value( const char *value, size_t length ) _noexcept {
 				if( unlikely( _type == UNKNOWN || (_type & SET) ) ) {
 					return false;
 				}
@@ -351,7 +385,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( const char *value, size_t length, data_type type ) throw( ) {
+			inline bool set_value( const char *value, size_t length, data_type type ) _noexcept {
 				if( unlikely( type == UNKNOWN || (type & SET) ) ) {
 					return false;
 				}
@@ -365,7 +399,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_binary( const const_string_t &value ) throw( ) {
+			inline bool set_binary( const const_string_t &value ) _noexcept {
 				if( unlikely( _type == UNKNOWN || (_type & SET) ) ) {
 					return false;
 				}
@@ -380,7 +414,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_binary( const char *value ) throw( ) {
+			inline bool set_binary( const char *value ) _noexcept {
 				if( unlikely( _type == UNKNOWN || (_type & SET) ) ) {
 					return false;
 				}
@@ -395,7 +429,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_binary( const void *value, size_t length ) throw( ) {
+			inline bool set_binary( const void *value, size_t length ) _noexcept {
 				if( unlikely( _type == UNKNOWN || (_type & SET) ) ) {
 					return false;
 				}
@@ -410,7 +444,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_binary( const const_string_t &value, data_type type ) throw( ) {
+			inline bool set_binary( const const_string_t &value, data_type type ) _noexcept {
 				if( unlikely( type == UNKNOWN || (type & SET) ) ) {
 					return false;
 				}
@@ -428,7 +462,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_binary( const char *value, data_type type ) throw( ) {
+			inline bool set_binary( const char *value, data_type type ) _noexcept {
 				if( unlikely( type == UNKNOWN || (type & SET) ) ) {
 					return false;
 				}
@@ -446,7 +480,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_binary( const void *value, size_t length, data_type type ) throw( ) {
+			inline bool set_binary( const void *value, size_t length, data_type type ) _noexcept {
 				if( unlikely( type == UNKNOWN || (type & SET) ) ) {
 					return false;
 				}
@@ -464,7 +498,7 @@ namespace botoc {
 			}
 			
 			__attribute__((warn_unused_result,format(printf,2,3)))
-			inline bool set_value_format( const char *format, ... ) throw( ) {
+			inline bool set_value_format( const char *format, ... ) _noexcept {
 				va_list v;
 				
 				if( unlikely( _type == UNKNOWN || (_type & SET) ) ) {
@@ -502,7 +536,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( float value, data_action action = REPLACE ) throw( ) {
+			inline bool set_value( float value, data_action action = REPLACE ) _noexcept {
 				if( unlikely( _type != NUMBER ) ) {
 					return false;
 				}
@@ -511,7 +545,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( double value, data_action action = REPLACE ) throw( ) {
+			inline bool set_value( double value, data_action action = REPLACE ) _noexcept {
 				if( unlikely( _type != NUMBER ) ) {
 					return false;
 				}
@@ -520,7 +554,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( int value, data_action action = REPLACE ) throw( ) {
+			inline bool set_value( int value, data_action action = REPLACE ) _noexcept {
 				if( unlikely( _type != NUMBER ) ) {
 					return false;
 				}
@@ -529,7 +563,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( long value, data_action action = REPLACE ) throw( ) {
+			inline bool set_value( long value, data_action action = REPLACE ) _noexcept {
 				if( unlikely( _type != NUMBER ) ) {
 					return false;
 				}
@@ -538,7 +572,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool add_item( const const_string_t &value ) throw( ) {
+			inline bool add_item( const const_string_t &value ) _noexcept {
 				if( unlikely( !(_type & SET) ) ) {
 					return false;
 				}
@@ -549,7 +583,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool add_item( const char *value ) throw( ) {
+			inline bool add_item( const char *value ) _noexcept {
 				if( unlikely( !(_type & SET) ) ) {
 					return false;
 				}
@@ -560,7 +594,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool add_item( const char *value, size_t length ) throw( ) {
+			inline bool add_item( const char *value, size_t length ) _noexcept {
 				if( unlikely( !(_type & SET) ) ) {
 					return false;
 				}
@@ -571,14 +605,14 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline void clear_items( void ) throw( ) {
+			inline void clear_items( void ) _noexcept {
 				if( _type & SET ) {
 					_list( ).clear( );
 				}
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool clear_items( data_type type ) throw( ) {
+			inline bool clear_items( data_type type ) _noexcept {
 				if( unlikely( !(type & SET) ) ) {
 					return false;
 				}
@@ -590,7 +624,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( void ) throw( ) :
+			inline item( void ) _noexcept :
 			_name( ),
 			_type( UNKNOWN ),
 			_action( REPLACE ),
@@ -599,7 +633,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline explicit item( const const_string_t &name, data_action action = REPLACE ) throw( ) :
+			inline explicit item( const const_string_t &name, data_action action = REPLACE ) _noexcept :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( action ),
@@ -608,7 +642,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline explicit item( const char *name, data_action action = REPLACE ) throw( ) :
+			inline explicit item( const char *name, data_action action = REPLACE ) _noexcept :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( action ),
@@ -802,7 +836,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline ~item( void ) throw( ) {
+			inline ~item( void ) _noexcept {
 				clear_data( );
 			}
 		};
@@ -812,37 +846,37 @@ namespace botoc {
 		/* prototypes */
 		
 		__attribute__((warn_unused_result,unused))
-		static bool update( const const_string_t &db, const const_string_t &key, const item_list_t &items, const item_list_t *expected = NULL ) throw( );
+		static bool update( const const_string_t &db, const const_string_t &key, const item_list_t &items, const item_list_t *expected = NULL ) _noexcept;
 		
 		__attribute__((warn_unused_result,unused))
-		static bool get( const const_string_t &db, const const_string_t &key, bool consistent, item_list_t &items ) throw( );
+		static bool get( const const_string_t &db, const const_string_t &key, bool consistent, item_list_t &items ) _noexcept;
 		
 		__attribute__((always_inline,unused))
-		static inline void disconnect( void ) throw( );
+		static inline void disconnect( void ) _noexcept;
 		
 		/* internal prototypes */
 		
 		__attribute__((warn_unused_result))
-		static PyObject *prep( bool disconnect = false ) throw( );
+		static PyObject *prep( bool disconnect = false ) _noexcept;
 		
 		__attribute__((warn_unused_result))
-		static PyObject *dict_from_items_expect( const item_list_t &items ) throw( );
+		static PyObject *dict_from_items_expect( const item_list_t &items ) _noexcept;
 		
 		__attribute__((warn_unused_result))
-		static PyObject *dict_from_items_update( const item_list_t &items ) throw( );
+		static PyObject *dict_from_items_update( const item_list_t &items ) _noexcept;
 		
 		__attribute__((warn_unused_result))
-		static PyObject *list_from_items( const item_list_t &items ) throw( );
+		static PyObject *list_from_items( const item_list_t &items ) _noexcept;
 		
 		__attribute__((warn_unused_result))
-		static inline bool item_from_dict( PyObject *obj, item &output ) throw( );
+		static inline bool item_from_dict( PyObject *obj, item &output ) _noexcept;
 		
 		__attribute__((warn_unused_result))
-		static bool update_from_dict( item_list_t &items, PyObject *ret_items ) throw( );
+		static bool update_from_dict( item_list_t &items, PyObject *ret_items ) _noexcept;
 		
 		/* implementation */
 		
-		static PyObject *prep( const bool disconnect ) throw( ) {
+		static PyObject *prep( const bool disconnect ) _noexcept {
 			/*
 			 * import boto.regioninfo
 			 * import boto.dynamodb.layer1
@@ -879,6 +913,10 @@ namespace botoc {
 				fprintf( stderr, "attempted to connect to DDB without a region\n" );
 				return NULL;
 			}
+			if( unlikely( user_key.size( ) <= 0 || user_secret.size( ) <= 0 ) ) {
+				fprintf( stderr, "attempted to connect to DDB without a valid IAM user\n" );
+				return NULL;
+			}
 			tried = true;
 			
 			if( unlikely( !py_init( ) ) ) {
@@ -911,7 +949,7 @@ namespace botoc {
 			return layer1;
 		}
 		
-		static PyObject *dict_from_items_expect( const item_list_t &items ) throw( ) {
+		static PyObject *dict_from_items_expect( const item_list_t &items ) _noexcept {
 			PyObject *r = PyDict_New( );
 			for( size_t i = 0, e = items.size( ); i < e; ++ i ) {
 				const size_t f = items[i].size( );
@@ -952,7 +990,7 @@ namespace botoc {
 			return r;
 		}
 		
-		static PyObject *dict_from_items_update( const item_list_t &items ) throw( ) {
+		static PyObject *dict_from_items_update( const item_list_t &items ) _noexcept {
 			PyObject *r = PyDict_New( );
 			for( size_t i = 0, e = items.size( ); i < e; ++ i ) {
 				const size_t f = items[i].size( );
@@ -1009,7 +1047,7 @@ namespace botoc {
 			return r;
 		}
 		
-		static PyObject *list_from_items( const item_list_t &items ) throw( ) {
+		static PyObject *list_from_items( const item_list_t &items ) _noexcept {
 			const size_t e = items.size( );
 			PyObject *r = PyList_New( (Py_ssize_t) e );
 			for( size_t i = 0; i < e; ++ i ) {
@@ -1024,7 +1062,7 @@ namespace botoc {
 			return r;
 		}
 		
-		static inline bool item_from_dict( PyObject *obj, item &output ) throw( ) {
+		static inline bool item_from_dict( PyObject *obj, item &output ) _noexcept {
 			if( obj == NULL ) {
 				return false;
 			}
@@ -1068,7 +1106,7 @@ namespace botoc {
 			return true;
 		}
 		
-		static bool update_from_dict( item_list_t &items, PyObject *ret_items ) throw( ) {
+		static bool update_from_dict( item_list_t &items, PyObject *ret_items ) _noexcept {
 			if( items.size( ) == 0 ) {
 				PyObject *key; // borrowed
 				PyObject *itm; // borrowed
@@ -1099,7 +1137,7 @@ namespace botoc {
 			return true;
 		}
 		
-		static bool update( const const_string_t &db, const const_string_t &key, const item_list_t &items, const item_list_t *expected ) throw( ) {
+		static bool update( const const_string_t &db, const const_string_t &key, const item_list_t &items, const item_list_t *expected ) _noexcept {
 			/* http://docs.amazonwebservices.com/amazondynamodb/latest/developerguide/API_UpdateItem.html
 			 * ret = layer1.update_item( [table],
 			 *   {'HashKeyElement':{'S':[key]}},
@@ -1153,7 +1191,7 @@ namespace botoc {
 			return true;
 		}
 		
-		static bool get( const const_string_t &db, const const_string_t &key, bool consistent, item_list_t &items ) throw( ) {
+		static bool get( const const_string_t &db, const const_string_t &key, bool consistent, item_list_t &items ) _noexcept {
 			/* http://docs.amazonwebservices.com/amazondynamodb/latest/developerguide/API_GetItem.html
 			 * layer1.get_item( [database_name], {'HashKeyElement':{'S':[key]}} )
 			 */
@@ -1204,7 +1242,7 @@ namespace botoc {
 			return true;
 		}
 		
-		static inline void disconnect( void ) throw( ) {
+		static inline void disconnect( void ) _noexcept {
 			(void) prep( true );
 		}
 	}

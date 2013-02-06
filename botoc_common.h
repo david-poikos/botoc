@@ -23,6 +23,28 @@
 #  define unlikely(x) x
 #endif
 
+#ifdef __cplusplus
+#  define LANGUAGE_CPP      1
+#  if __cplusplus > 199711L
+#    define LANGUAGE_CPP11  1
+#  elif defined(USING_CPP11)
+#    define LANGUAGE_CPP11  1
+#  else
+#    define LANGUAGE_CPP11  0
+#  endif
+#else
+#  define LANGUAGE_CPP      0
+#  define LANGUAGE_CPP11    0
+#endif
+
+#if LANGUAGE_CPP11
+#  define ALLOW_NONPOD_UNION 1
+#  define _noexcept noexcept
+#else
+#  define ALLOW_NONPOD_UNION 0
+#  define _noexcept throw()
+#endif
+
 #define LOCALBLOCK
 
 /* constants */
@@ -53,65 +75,65 @@ namespace botoc {
 	
 	// Configuration
 	__attribute__((warn_unused_result,unused))
-	static inline bool set_iam_user( const const_string_t &key, const const_string_t &secret ) throw( );
+	static inline bool set_iam_user( const const_string_t &key, const const_string_t &secret ) _noexcept;
 	
 	__attribute__((warn_unused_result,unused))
-	static inline bool set_region( const const_string_t &region ) throw( );
+	static inline bool set_region( const const_string_t &region ) _noexcept;
 	
 	// Base64
 	__attribute__((warn_unused_result,unused))
-	static inline size_t base64( const unsigned char *string, size_t bytecount, char *output, const char alphabet[64] = NULL, bool cap = true, bool term = true ) throw( );
+	static inline size_t base64( const unsigned char *string, size_t bytecount, char *output, const char alphabet[64] = NULL, bool cap = true, bool term = true ) _noexcept;
 	
 	__attribute__((warn_unused_result,unused))
-	static inline size_t unbase64( const unsigned char *string, size_t length, char *output, const char alphabet[64] = NULL, bool term = false ) throw( );
+	static inline size_t unbase64( const unsigned char *string, size_t length, char *output, const char alphabet[64] = NULL, bool term = false ) _noexcept;
 	
 	__attribute__((warn_unused_result,unused))
-	static inline bool encode_binary( const void *data, size_t length, string_t &output ) throw( );
+	static inline bool encode_binary( const void *data, size_t length, string_t &output ) _noexcept;
 	
 	__attribute__((warn_unused_result,unused))
-	static inline size_t decode_binary( const const_string_t &data, void **output ) throw( );
+	static inline size_t decode_binary( const const_string_t &data, void **output ) _noexcept;
 	
 	// Python helpers
 	__attribute__((always_inline,warn_unused_result,unused))
-	static inline bool py_init( void ) throw( );
+	static inline bool py_init( void ) _noexcept;
 	
 	__attribute__((always_inline,unused))
-	static inline void py_release( PyObject *o ) throw( );
+	static inline void py_release( PyObject *o ) _noexcept;
 	
 	__attribute__((always_inline,warn_unused_result,unused))
-	static inline bool py_release_success( PyObject *o ) throw( );
+	static inline bool py_release_success( PyObject *o ) _noexcept;
 	
 	__attribute__((always_inline,warn_unused_result,unused))
-	static inline PyObject *py_string( const char *str ) throw( );
+	static inline PyObject *py_string( const char *str ) _noexcept;
 	
 	__attribute__((always_inline,warn_unused_result,unused))
-	static inline PyObject *py_string( const char *str, size_t size ) throw( );
+	static inline PyObject *py_string( const char *str, size_t size ) _noexcept;
 	
 	__attribute__((always_inline,warn_unused_result,unused))
-	static inline PyObject *py_string( const const_string_t &str ) throw( );
+	static inline PyObject *py_string( const const_string_t &str ) _noexcept;
 	
 	__attribute__((always_inline,warn_unused_result,unused))
-	static inline const char *py_cstring( PyObject *str ) throw( );
+	static inline const char *py_cstring( PyObject *str ) _noexcept;
 	
 	__attribute__((warn_unused_result,unused))
-	static inline PyObject *py_listitem_tmp( PyObject *list, Py_ssize_t index ) throw( );
+	static inline PyObject *py_listitem_tmp( PyObject *list, Py_ssize_t index ) _noexcept;
 	
 	__attribute__((warn_unused_result))
-	static bool py_error( const char *stage, const char *extra = "" ) throw( );
+	static bool py_error( const char *stage, const char *extra = "" ) _noexcept;
 	
 	__attribute__((warn_unused_result))
-	static PyObject *py_import( const char *path ) throw( );
+	static PyObject *py_import( const char *path ) _noexcept;
 	
 	__attribute__((warn_unused_result,sentinel))
-	static PyObject *py_construct( PyObject *space, const char *classname, ... ) throw( );
+	static PyObject *py_construct( PyObject *space, const char *classname, ... ) _noexcept;
 	
 	__attribute__((warn_unused_result,sentinel))
-	static PyObject *py_callfunc( PyObject *object, const char *funcname, ... ) throw( );
+	static PyObject *py_callfunc( PyObject *object, const char *funcname, ... ) _noexcept;
 	
 	/* implementation */
 	
 	// Configuration
-	static inline bool set_iam_user( const const_string_t &key, const const_string_t &secret ) throw( ) {
+	static inline bool set_iam_user( const const_string_t &key, const const_string_t &secret ) _noexcept {
 		try {
 			user_key.assign( key );
 			user_secret.assign( secret );
@@ -121,7 +143,7 @@ namespace botoc {
 		return true;
 	}
 	
-	static inline bool set_region( const const_string_t &reg ) throw( ) {
+	static inline bool set_region( const const_string_t &reg ) _noexcept {
 		try {
 			region.assign( reg );
 		} catch( ... ) {
@@ -131,7 +153,7 @@ namespace botoc {
 	}
 	
 	// Base64
-	static inline size_t base64( const unsigned char *const string, const size_t bytecount, char *const output, const char alphabet[64], const bool cap, const bool term ) throw( ) {
+	static inline size_t base64( const unsigned char *const string, const size_t bytecount, char *const output, const char alphabet[64], const bool cap, const bool term ) _noexcept {
 		if( unlikely( string == NULL ) ) {
 			return 0;
 		}
@@ -199,7 +221,7 @@ namespace botoc {
 				break;
 		}
 	}
-	static inline size_t unbase64( const unsigned char *const string, const size_t length, char *const output, const char alphabet[64], const bool term ) throw( ) {
+	static inline size_t unbase64( const unsigned char *const string, const size_t length, char *const output, const char alphabet[64], const bool term ) _noexcept {
 		if( unlikely( string == NULL ) ) {
 			return 0;
 		}
@@ -295,7 +317,7 @@ namespace botoc {
 		return p + 3;
 	}
 	
-	static inline bool encode_binary( const void *const data, const size_t length, string_t &output ) throw( ) {
+	static inline bool encode_binary( const void *const data, const size_t length, string_t &output ) _noexcept {
 		size_t l = base64( (const unsigned char *) data, length, NULL, NULL, true, false );
 		try {
 			output.resize( l ); // slower than reserve, but std::string optimises weirdly otherwise :(
@@ -318,7 +340,7 @@ namespace botoc {
 		return true;
 	}
 	
-	static inline size_t decode_binary( const const_string_t &data, void **output ) throw( ) {
+	static inline size_t decode_binary( const const_string_t &data, void **output ) _noexcept {
 		if( unlikely( output == NULL ) ) {
 			return 0;
 		}
@@ -342,18 +364,18 @@ namespace botoc {
 	}
 	
 	// Python helpers
-	static inline bool py_init( void ) throw( ) {
+	static inline bool py_init( void ) _noexcept {
 		Py_Initialize( );
 		return !py_error( "initializing python" );
 	}
 	
-	static inline void py_release( PyObject *o ) throw( ) {
+	static inline void py_release( PyObject *o ) _noexcept {
 		if( likely( o != NULL ) ) {
 			Py_DECREF( o );
 		}
 	}
 	
-	static inline bool py_release_success( PyObject *o ) throw( ) {
+	static inline bool py_release_success( PyObject *o ) _noexcept {
 		if( unlikely( o == NULL ) ) {
 			return false;
 		}
@@ -361,23 +383,23 @@ namespace botoc {
 		return true;
 	}
 	
-	static inline PyObject *py_string( const char *const str ) throw( ) {
+	static inline PyObject *py_string( const char *const str ) _noexcept {
 		return PyString_FromString( str );
 	}
 	
-	static inline PyObject *py_string( const char *const str, const size_t size ) throw( ) {
+	static inline PyObject *py_string( const char *const str, const size_t size ) _noexcept {
 		return PyString_FromStringAndSize( str, (Py_ssize_t) size );
 	}
 	
-	static inline PyObject *py_string( const const_string_t &str ) throw( ) {
+	static inline PyObject *py_string( const const_string_t &str ) _noexcept {
 		return PyString_FromStringAndSize( str.data( ), (Py_ssize_t) str.size( ) );
 	}
 	
-	static inline const char *py_cstring( PyObject *str ) throw( ) {
+	static inline const char *py_cstring( PyObject *str ) _noexcept {
 		return PyString_AsString( str );
 	}
 	
-	static inline PyObject *py_listitem_tmp( PyObject *list, Py_ssize_t index ) throw( ) {
+	static inline PyObject *py_listitem_tmp( PyObject *list, Py_ssize_t index ) _noexcept {
 		if( unlikely( list == NULL ) ) {
 			return NULL;
 		}
@@ -395,7 +417,7 @@ namespace botoc {
 		return itm;
 	}
 	
-	static bool py_error( const char *const stage, const char *const extra ) throw( ) {
+	static bool py_error( const char *const stage, const char *const extra ) _noexcept {
 		if( likely( PyErr_Occurred( ) == NULL ) ) {
 			return false;
 		}
@@ -418,7 +440,7 @@ namespace botoc {
 		return true;
 	}
 	
-	static PyObject *py_import( const char *const path ) throw( ) {
+	static PyObject *py_import( const char *const path ) _noexcept {
 		if( unlikely( path == NULL ) ) {
 			return NULL;
 		}
@@ -515,7 +537,7 @@ namespace botoc {
 	Py_DECREF( arg_list ); \
 	py_release( arg_dict )
 	
-	static PyObject *py_construct( PyObject *mod, const char *const cls, ... ) throw( ) {
+	static PyObject *py_construct( PyObject *mod, const char *const cls, ... ) _noexcept {
 		if( unlikely( mod == NULL || cls == NULL ) ) {
 			return NULL;
 		}
@@ -554,7 +576,7 @@ namespace botoc {
 		return ret;
 	}
 	
-	static PyObject *py_callfunc( PyObject *obj, const char *const fnc, ... ) throw( ) {
+	static PyObject *py_callfunc( PyObject *obj, const char *const fnc, ... ) _noexcept {
 		if( unlikely( obj == NULL || fnc == NULL ) ) {
 			return NULL;
 		}

@@ -33,25 +33,25 @@ namespace botoc {
 		/* prototypes */
 		
 		__attribute__((warn_unused_result,unused))
-		static bool put( const const_string_t &queue, const const_string_t &message ) throw( );
+		static bool put( const const_string_t &queue, const const_string_t &message ) _noexcept;
 		
 		__attribute__((warn_unused_result,unused))
-		static handle_t get( const const_string_t &queue, string_t &body, int lockSeconds = 30, int waitSeconds = 0 ) throw( );
+		static handle_t get( const const_string_t &queue, string_t &body, int lockSeconds = 30, int waitSeconds = 0 ) _noexcept;
 		
 		__attribute__((warn_unused_result,unused))
-		static bool remove( const const_string_t &queue, handle_t handle ) throw( );
+		static bool remove( const const_string_t &queue, handle_t handle ) _noexcept;
 		
 		__attribute__((always_inline,unused))
-		static inline void disconnect( void ) throw( );
+		static inline void disconnect( void ) _noexcept;
 		
 		/* internal prototypes */
 		
 		__attribute__((warn_unused_result))
-		static PyObject *prep( const const_string_t &queue_name, bool disconnect = false ) throw( );
+		static PyObject *prep( const const_string_t &queue_name, bool disconnect = false ) _noexcept;
 		
 		/* implementation */
 		
-		static PyObject *prep( const const_string_t &queue_name, const bool disconnect ) throw( ) {
+		static PyObject *prep( const const_string_t &queue_name, const bool disconnect ) _noexcept {
 			/*
 			 * import boto.regioninfo
 			 * import boto.sqs.connection
@@ -91,6 +91,10 @@ namespace botoc {
 			if( !tried ) {
 				if( unlikely( region.size( ) <= 0 ) ) {
 					fprintf( stderr, "attempted to connect to SQS without a region\n" );
+					return NULL;
+				}
+				if( unlikely( user_key.size( ) <= 0 || user_secret.size( ) <= 0 ) ) {
+					fprintf( stderr, "attempted to connect to SQS without a valid IAM user\n" );
 					return NULL;
 				}
 				tried = true;
@@ -149,7 +153,7 @@ namespace botoc {
 			return queue;
 		}
 		
-		static bool put( const const_string_t &queue_name, const const_string_t &message ) throw( ) {
+		static bool put( const const_string_t &queue_name, const const_string_t &message ) _noexcept {
 			/*
 			 * queue.write( queue.new_message( [message] ) )
 			 */
@@ -164,7 +168,7 @@ namespace botoc {
 				NULL ),
 			NULL ) );
 		}
-		static handle_t get( const const_string_t &queue_name, string_t &body, const int lockSeconds, const int waitSeconds ) throw( ) {
+		static handle_t get( const const_string_t &queue_name, string_t &body, const int lockSeconds, const int waitSeconds ) _noexcept {
 			/*
 			 * handle = queue.get_messages( visibility_timeout = [lockSeconds], wait_time_seconds = [waitSeconds] )[0]
 			 * body = handle.get_body( )
@@ -203,7 +207,7 @@ namespace botoc {
 			
 			return (handle_t) msg;
 		}
-		static bool remove( const const_string_t &queue_name, handle_t handle ) throw( ) {
+		static bool remove( const const_string_t &queue_name, handle_t handle ) _noexcept {
 			/*
 			 * handle.delete( )
 			 */
@@ -221,7 +225,7 @@ namespace botoc {
 			Py_DECREF( (PyObject *) handle );
 			return py_release_success( ret );
 		}
-		static inline void disconnect( void ) throw( ) {
+		static inline void disconnect( void ) _noexcept {
 			const const_string_t t;
 			(void) prep( t, true );
 		}
