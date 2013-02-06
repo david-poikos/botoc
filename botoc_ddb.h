@@ -221,25 +221,9 @@ namespace botoc {
 			 */
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_name( const string_t &name ) throw( ) {
+			inline bool set_name( const const_string_t &name ) throw( ) {
 				try {
 					_name.assign( name );
-				} catch( ... ) { return false; }
-				return true;
-			}
-			
-			__attribute__((always_inline,warn_unused_result))
-			inline bool set_name( const char *name ) throw( ) {
-				try {
-					_name.assign( name );
-				} catch( ... ) { return false; }
-				return true;
-			}
-			
-			__attribute__((always_inline,warn_unused_result))
-			inline bool set_name( const char *name, size_t length ) throw( ) {
-				try {
-					_name.assign( name, length );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -306,7 +290,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( const string_t &value ) throw( ) {
+			inline bool set_value( const const_string_t &value ) throw( ) {
 				if( unlikely( _type == UNKNOWN || (_type & SET) ) ) {
 					return false;
 				}
@@ -317,7 +301,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_value( const string_t &value, data_type type ) throw( ) {
+			inline bool set_value( const const_string_t &value, data_type type ) throw( ) {
 				if( unlikely( type == UNKNOWN || (type & SET) ) ) {
 					return false;
 				}
@@ -381,7 +365,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_binary( const string_t &value ) throw( ) {
+			inline bool set_binary( const const_string_t &value ) throw( ) {
 				if( unlikely( _type == UNKNOWN || (_type & SET) ) ) {
 					return false;
 				}
@@ -426,7 +410,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool set_binary( const string_t &value, data_type type ) throw( ) {
+			inline bool set_binary( const const_string_t &value, data_type type ) throw( ) {
 				if( unlikely( type == UNKNOWN || (type & SET) ) ) {
 					return false;
 				}
@@ -554,12 +538,12 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline,warn_unused_result))
-			inline bool add_item( const string_t &value ) throw( ) {
+			inline bool add_item( const const_string_t &value ) throw( ) {
 				if( unlikely( !(_type & SET) ) ) {
 					return false;
 				}
 				try {
-					_list( ).push_back( value );
+					_list( ).push_back( string_t( value ) );
 				} catch( ... ) { return false; }
 				return true;
 			}
@@ -615,7 +599,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline explicit item( const string_t &name, data_action action = REPLACE ) throw( ) :
+			inline explicit item( const const_string_t &name, data_action action = REPLACE ) throw( ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( action ),
@@ -633,7 +617,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, data_type type, data_action action = REPLACE ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, data_type type, data_action action = REPLACE ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( action ),
@@ -646,7 +630,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, const string_t &value, data_type type = STRING ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, const const_string_t &value, data_type type = STRING ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( REPLACE ),
@@ -659,7 +643,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, const char *value, data_type type = STRING ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, const char *value, data_type type = STRING ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( REPLACE ),
@@ -672,7 +656,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, const char *value, size_t length, data_type type = STRING ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, const char *value, size_t length, data_type type = STRING ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( REPLACE ),
@@ -685,7 +669,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, const char *value, size_t length, flag_raw raw, data_type type = BINARY ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, const char *value, size_t length, flag_raw raw, data_type type = BINARY ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( REPLACE ),
@@ -699,7 +683,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, const void *value, size_t length, data_type type = BINARY ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, const void *value, size_t length, data_type type = BINARY ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( REPLACE ),
@@ -712,7 +696,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, float value, data_action action = REPLACE ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, float value, data_action action = REPLACE ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( REPLACE ),
@@ -729,7 +713,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, double value, data_action action = REPLACE ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, double value, data_action action = REPLACE ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( action ),
@@ -746,7 +730,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, int value, data_action action = REPLACE ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, int value, data_action action = REPLACE ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( action ),
@@ -763,7 +747,7 @@ namespace botoc {
 			}
 			
 			__attribute__((always_inline))
-			inline item( const string_t &name, long value, data_action action = REPLACE ) throw( std::bad_alloc ) :
+			inline item( const const_string_t &name, long value, data_action action = REPLACE ) throw( std::bad_alloc ) :
 			_name( name ),
 			_type( UNKNOWN ),
 			_action( action ),
@@ -828,10 +812,10 @@ namespace botoc {
 		/* prototypes */
 		
 		__attribute__((warn_unused_result,unused))
-		static bool update( const string_t &db, const string_t &key, const item_list_t &items, const item_list_t *expected = NULL ) throw( );
+		static bool update( const const_string_t &db, const const_string_t &key, const item_list_t &items, const item_list_t *expected = NULL ) throw( );
 		
 		__attribute__((warn_unused_result,unused))
-		static bool get( const string_t &db, const string_t &key, bool consistent, item_list_t &items ) throw( );
+		static bool get( const const_string_t &db, const const_string_t &key, bool consistent, item_list_t &items ) throw( );
 		
 		__attribute__((always_inline,unused))
 		static inline void disconnect( void ) throw( );
@@ -853,7 +837,8 @@ namespace botoc {
 		__attribute__((warn_unused_result))
 		static inline bool item_from_dict( PyObject *obj, item &output ) throw( );
 		
-		static void update_from_dict( item_list_t &items, PyObject *ret_items ) throw( );
+		__attribute__((warn_unused_result))
+		static bool update_from_dict( item_list_t &items, PyObject *ret_items ) throw( );
 		
 		/* implementation */
 		
@@ -889,6 +874,10 @@ namespace botoc {
 			
 			if( tried ) {
 				return layer1;
+			}
+			if( unlikely( region.size( ) <= 0 ) ) {
+				fprintf( stderr, "attempted to connect to DDB without a region\n" );
+				return NULL;
 			}
 			tried = true;
 			
@@ -1079,7 +1068,7 @@ namespace botoc {
 			return true;
 		}
 		
-		static void update_from_dict( item_list_t &items, PyObject *ret_items ) throw( ) {
+		static bool update_from_dict( item_list_t &items, PyObject *ret_items ) throw( ) {
 			if( items.size( ) == 0 ) {
 				PyObject *key; // borrowed
 				PyObject *itm; // borrowed
@@ -1092,7 +1081,7 @@ namespace botoc {
 					try {
 						items.push_back( o );
 					} catch( ... ) {
-						
+						return false;
 					}
 				}
 			} else {
@@ -1107,9 +1096,10 @@ namespace botoc {
 					}
 				}
 			}
+			return true;
 		}
 		
-		static bool update( const string_t &db, const string_t &key, const item_list_t &items, const item_list_t *expected ) throw( ) {
+		static bool update( const const_string_t &db, const const_string_t &key, const item_list_t &items, const item_list_t *expected ) throw( ) {
 			/* http://docs.amazonwebservices.com/amazondynamodb/latest/developerguide/API_UpdateItem.html
 			 * ret = layer1.update_item( [table],
 			 *   {'HashKeyElement':{'S':[key]}},
@@ -1163,7 +1153,7 @@ namespace botoc {
 			return true;
 		}
 		
-		static bool get( const string_t &db, const string_t &key, bool consistent, item_list_t &items ) throw( ) {
+		static bool get( const const_string_t &db, const const_string_t &key, bool consistent, item_list_t &items ) throw( ) {
 			/* http://docs.amazonwebservices.com/amazondynamodb/latest/developerguide/API_GetItem.html
 			 * layer1.get_item( [database_name], {'HashKeyElement':{'S':[key]}} )
 			 */
@@ -1205,7 +1195,11 @@ namespace botoc {
 				fprintf( stderr, "loaded record, used %f capacity units\n", PyFloat_AsDouble( cap ) );
 			}
 			
-			update_from_dict( items, ret_items );
+			if( unlikely( !update_from_dict( items, ret_items ) ) ) {
+				fprintf( stderr, "out of memory when loading items from table \"%.*s\"\n", SIZED_STRING(db) );
+				Py_DECREF( ret );
+				return false;
+			}
 			Py_DECREF( ret );
 			return true;
 		}

@@ -17,8 +17,8 @@
 void print_key_values( FILE *fp, const botoc::ddb::item_list_t &items ) throw( );
 void print_keys( FILE *fp, const botoc::ddb::item_list_t &items ) throw( );
 
-void test_sqs( const botoc::string_t &queue ) throw( );
-void test_ddb( const botoc::string_t &database ) throw( );
+void test_sqs( const botoc::const_string_t &queue ) throw( );
+void test_ddb( const botoc::const_string_t &database ) throw( );
 
 
 /* implementation */
@@ -69,7 +69,7 @@ int main( void ) {
     return 0;
 }
 
-void test_sqs( const botoc::string_t &queue ) throw( ) {
+void test_sqs( const botoc::const_string_t &queue ) throw( ) {
 	fprintf( stdout, "begin SQS.\n" );
 	
 	LOCALBLOCK {
@@ -102,7 +102,7 @@ void test_sqs( const botoc::string_t &queue ) throw( ) {
 	fflush( stdout );
 }
 
-void test_ddb( const botoc::string_t &database ) throw( ) {
+void test_ddb( const botoc::const_string_t &database ) throw( ) {
 	fprintf( stdout, "begin DDB.\n" );
 	
 	LOCALBLOCK {

@@ -17,11 +17,13 @@ Functionality
 
 Provides very limited (but very easy to use) functionality for AWS services:
 
-Common
+### Common
+
 * botoc::set_iam_user Change the IAM credentials (key and secret)
 * botoc::set_region Change the working region (e.g. "eu-west-1")
 
-SQS (botoc_sqs.h)
+### SQS (botoc_sqs.h)
+
 * botoc::sqs::prep Prepare a connection with the current region and credentials
   (called automatically when needed). Connections will persist until disconnect
   is called.
@@ -32,7 +34,8 @@ SQS (botoc_sqs.h)
 * botoc::sqs::disconnect Breaks the current connection; only needed for
   reconnecting as a different user or region.
 
-DDB (botoc_ddb.h)
+### DDB (botoc_ddb.h)
+
 * botoc::ddb::prep Prepare a connection with the current region and credentials
   (called automatically when needed). Connections will persist until disconnect
   is called.

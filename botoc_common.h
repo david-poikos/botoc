@@ -39,6 +39,7 @@ namespace botoc {
 	
 	typedef std::size_t size_t;
 	typedef std::string string_t;
+	typedef const std::string const_string_t;
 	typedef std::vector<string_t> string_list_t;
 	typedef void *handle_t; // used to return python objects as handles
 	
@@ -52,22 +53,10 @@ namespace botoc {
 	
 	// Configuration
 	__attribute__((warn_unused_result,unused))
-	static inline bool set_iam_user( const string_t &key, const string_t &secret ) throw( );
+	static inline bool set_iam_user( const const_string_t &key, const const_string_t &secret ) throw( );
 	
 	__attribute__((warn_unused_result,unused))
-	static inline bool set_iam_user( const string_t &key, const char *secret ) throw( );
-	
-	__attribute__((warn_unused_result,unused))
-	static inline bool set_iam_user( const char *key, const string_t &secret ) throw( );
-	
-	__attribute__((warn_unused_result,unused))
-	static inline bool set_iam_user( const char *key, const char *secret ) throw( );
-	
-	__attribute__((warn_unused_result,unused))
-	static inline bool set_region( const string_t &region ) throw( );
-	
-	__attribute__((warn_unused_result,unused))
-	static inline bool set_region( const char *region ) throw( );
+	static inline bool set_region( const const_string_t &region ) throw( );
 	
 	// Base64
 	__attribute__((warn_unused_result,unused))
@@ -80,7 +69,7 @@ namespace botoc {
 	static inline bool encode_binary( const void *data, size_t length, string_t &output ) throw( );
 	
 	__attribute__((warn_unused_result,unused))
-	static inline size_t decode_binary( const string_t &data, void **output ) throw( );
+	static inline size_t decode_binary( const const_string_t &data, void **output ) throw( );
 	
 	// Python helpers
 	__attribute__((always_inline,warn_unused_result,unused))
@@ -99,7 +88,7 @@ namespace botoc {
 	static inline PyObject *py_string( const char *str, size_t size ) throw( );
 	
 	__attribute__((always_inline,warn_unused_result,unused))
-	static inline PyObject *py_string( const string_t &str ) throw( );
+	static inline PyObject *py_string( const const_string_t &str ) throw( );
 	
 	__attribute__((always_inline,warn_unused_result,unused))
 	static inline const char *py_cstring( PyObject *str ) throw( );
@@ -122,7 +111,7 @@ namespace botoc {
 	/* implementation */
 	
 	// Configuration
-	static inline bool set_iam_user( const string_t &key, const string_t &secret ) throw( ) {
+	static inline bool set_iam_user( const const_string_t &key, const const_string_t &secret ) throw( ) {
 		try {
 			user_key.assign( key );
 			user_secret.assign( secret );
@@ -132,46 +121,7 @@ namespace botoc {
 		return true;
 	}
 	
-	static inline bool set_iam_user( const string_t &key, const char *secret ) throw( ) {
-		try {
-			user_key.assign( key );
-			user_secret.assign( secret );
-		} catch( ... ) {
-			return false;
-		}
-		return true;
-	}
-	
-	static inline bool set_iam_user( const char *key, const string_t &secret ) throw( ) {
-		try {
-			user_key.assign( key );
-			user_secret.assign( secret );
-		} catch( ... ) {
-			return false;
-		}
-		return true;
-	}
-	
-	static inline bool set_iam_user( const char *key, const char *secret ) throw( ) {
-		try {
-			user_key.assign( key );
-			user_secret.assign( secret );
-		} catch( ... ) {
-			return false;
-		}
-		return true;
-	}
-	
-	static inline bool set_region( const string_t &reg ) throw( ) {
-		try {
-			region.assign( reg );
-		} catch( ... ) {
-			return false;
-		}
-		return true;
-	}
-	
-	static inline bool set_region( const char *reg ) throw( ) {
+	static inline bool set_region( const const_string_t &reg ) throw( ) {
 		try {
 			region.assign( reg );
 		} catch( ... ) {
@@ -368,7 +318,7 @@ namespace botoc {
 		return true;
 	}
 	
-	static inline size_t decode_binary( const string_t &data, void **output ) throw( ) {
+	static inline size_t decode_binary( const const_string_t &data, void **output ) throw( ) {
 		if( unlikely( output == NULL ) ) {
 			return 0;
 		}
@@ -419,7 +369,7 @@ namespace botoc {
 		return PyString_FromStringAndSize( str, (Py_ssize_t) size );
 	}
 	
-	static inline PyObject *py_string( const string_t &str ) throw( ) {
+	static inline PyObject *py_string( const const_string_t &str ) throw( ) {
 		return PyString_FromStringAndSize( str.data( ), (Py_ssize_t) str.size( ) );
 	}
 	
