@@ -578,15 +578,18 @@ namespace botoc {
 	
 	static PyObject *py_callfunc( PyObject *obj, const char *const fnc, ... ) _noexcept {
 		if( unlikely( obj == NULL || fnc == NULL ) ) {
+			py_cancel_va( fnc );
 			return NULL;
 		}
 		
 		if( unlikely( !PyObject_HasAttrString( obj, fnc ) ) ) {
 			fprintf( stderr, "python function %s not found\n", fnc );
+			py_cancel_va( fnc );
 			return NULL;
 		}
 		PyObject *funcobj = PyObject_GetAttrString( obj, fnc );
 		if( unlikely( py_error( "find function ", fnc ) ) ) {
+			fprintf( stderr, "python function %s not referenced\n", fnc );
 			py_release( funcobj );
 			py_cancel_va( fnc );
 			return NULL;
