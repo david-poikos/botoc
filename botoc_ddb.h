@@ -1213,7 +1213,7 @@ namespace botoc {
 				"", py_string( db ),
 				"", key_dict,
 				"attributes_to_get", list_from_items( items ),
-				"consistent_read", Py_INCREF( consistent ? Py_True : Py_False ),
+				"consistent_read", py_boolean( consistent ),
 			NULL );
 			
 			if( unlikely( ret == NULL ) ) {

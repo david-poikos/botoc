@@ -115,6 +115,9 @@ namespace botoc {
 	__attribute__((always_inline,warn_unused_result,unused))
 	static inline const char *py_cstring( PyObject *str ) _noexcept;
 	
+	__attribute__((always_inline,warn_unused_result,unused))
+	static inline PyObject *py_boolean( bool state ) noexcept;
+	
 	__attribute__((warn_unused_result,unused))
 	static inline PyObject *py_listitem_tmp( PyObject *list, Py_ssize_t index ) _noexcept;
 	
@@ -397,6 +400,12 @@ namespace botoc {
 	
 	static inline const char *py_cstring( PyObject *str ) _noexcept {
 		return PyString_AsString( str );
+	}
+	
+	static inline PyObject *py_boolean( bool state ) noexcept {
+		PyObject *r = state ? Py_True : Py_False;
+		Py_INCREF( r );
+		return r;
 	}
 	
 	static inline PyObject *py_listitem_tmp( PyObject *list, Py_ssize_t index ) _noexcept {
